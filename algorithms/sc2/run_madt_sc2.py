@@ -20,14 +20,15 @@ parser.add_argument('--context_length', type=int, default=1)
 parser.add_argument('--model_type', type=str, default='state_only')
 parser.add_argument('--eval_episodes', type=int, default=32)
 parser.add_argument('--max_timestep', type=int, default=400)
-parser.add_argument('--log_dir', type=str, default='./logs/')
+parser.add_argument('--log_dir', type=str, default='./madt_logs/')
 parser.add_argument('--save_log', type=bool, default=True)
 parser.add_argument('--exp_name', type=str, default='easy_trans')
 parser.add_argument('--pre_train_model_path', type=str, default='../../offline_model/')
 
 parser.add_argument('--offline_map_lists', type=str, nargs="+", help="list of map names")
 parser.add_argument('--offline_episode_num', type=int, nargs="+", help="list of episode numbers drawn from each map dataset")
-parser.add_argument('--offline_data_quality', type=str, nargs="+", default='good', help="quality of data")
+parser.add_argument('--offline_test_episodes', type=int, default=0, help="list of episode numbers used for testing while offline training")
+parser.add_argument('--offline_data_quality', type=str, nargs="+", default=['good'], help="quality of data")
 parser.add_argument('--offline_data_dir', type=str, default='../../offline_data/')
 
 parser.add_argument('--offline_epochs', type=int, default=10)
@@ -45,9 +46,9 @@ parser.add_argument('--online_eval_interval', type=int, default=1)
 parser.add_argument('--online_train_critic', type=bool, default=True)
 parser.add_argument('--online_pre_train_model_load', type=bool, default=True)
 parser.add_argument('--online_pre_train_model_id', type=int, default=9)
-global_obs_dim = 99
-local_obs_dim = 79
-action_dim = 10
+global_obs_dim = 259
+local_obs_dim = 209
+action_dim = 14
 
 # args = parser.parse_args(args, parser)
 args = parser.parse_args()
@@ -88,18 +89,28 @@ if torch.cuda.is_available():
 buffer = MadtReplayBuffer(block_size, global_obs_dim, local_obs_dim, action_dim)
 rollout_worker = RolloutWorker(model, critic_model, buffer, global_obs_dim, local_obs_dim, action_dim)
 
-used_data_dir = []
+used_data_dir = {}
 '''
 for map_name in args.offline_map_lists:
     source_dir = args.offline_data_dir + map_name
     for quality in args.offline_data_quality:
         used_data_dir.append(f"{source_dir}/{quality}.hdf5")
 '''
+map_names = ""
+qualities = ""
 for map_name in args.offline_map_lists:
-    source_dir = args.offline_data_dir
-    used_data_dir.append(f"{source_dir}/{map_name}.hdf5")
+    used_data_dir[map_name] = []
+    source_dir = os.path.join(args.offline_data_dir, map_name)
+    map_names += map_name
+    if map_names != args.offline_map_lists[-1]:
+        map_names += '_'
+    for quality in args.offline_data_quality:
+        qualities += quality
+        for file_path in os.listdir(os.path.join(source_dir, quality)):
+            used_data_dir[map_name].append(os.path.join(source_dir, quality, file_path))
 
-buffer.load_offline_data(used_data_dir, args.offline_episode_num, max_epi_length=eval_env.max_timestep)
+buffer.load_offline_data(used_data_dir, args.offline_episode_num, args.offline_test_episodes,
+                         max_epi_length=eval_env.max_timestep)
 offline_dataset = buffer.sample()
 offline_dataset.stats()
 
@@ -112,21 +123,26 @@ target_rtgs = 20.
 print("offline target_rtgs: ", target_rtgs)
 for i in range(args.offline_epochs):
     offline_actor_loss, offline_critic_loss, _, __, ___ = offline_trainer.train(offline_dataset,
+                                                                                args.offline_test_episodes,
                                                                                 args.offline_train_critic)
     if args.save_log:
-        writter.add_scalar('offline/{args.map_name}/offline_actor_loss', offline_actor_loss, i)
-        writter.add_scalar('offline/{args.map_name}/offline_critic_loss', offline_critic_loss, i)
+        train_acc = offline_trainer.train_n_correct / offline_trainer.train_n_total
+        test_acc = offline_trainer.test_n_correct / offline_trainer.test_n_total
+        writter.add_scalar(f"{map_names}/offline/training accuracy", train_acc, i)
+        writter.add_scalar(f"{map_names}/offline/testing accuracy", test_acc, i)
+        writter.add_scalar(f'{map_names}/offline/offline_actor_loss', offline_actor_loss, i)
+        writter.add_scalar(f'{map_names}/offline/offline_critic_loss', offline_critic_loss, i)
     if i % args.offline_eval_interval == 0:
         aver_return, aver_win_rate, _ = rollout_worker.rollout(eval_env, target_rtgs, train=False)
         print("offline epoch: %s, return: %s, eval_win_rate: %s" % (i, aver_return, aver_win_rate))
         if args.save_log:
-            writter.add_scalar('offline/{args.map_name}/aver_return', aver_return.item(), i)
-            writter.add_scalar('offline/{args.map_name}/aver_win_rate', aver_win_rate, i)
+            writter.add_scalar(f'{map_names}/aver_return', aver_return.item(), i)
+            writter.add_scalar(f'{map_names}/aver_win_rate', aver_win_rate, i)
     if args.offline_model_save:
-        actor_path = args.pre_train_model_path + args.exp_name + '/actor'
+        actor_path = args.pre_train_model_path + args.exp_name + '/' + map_names + '_' + qualities + '/actor'
         if not os.path.exists(actor_path):
             os.makedirs(actor_path)
-        critic_path = args.pre_train_model_path + args.exp_name + '/critic'
+        critic_path = args.pre_train_model_path + args.exp_name + '/' + map_names + '_' + qualities + '/critic'
         if not os.path.exists(critic_path):
             os.makedirs(critic_path)
         torch.save(model.state_dict(), actor_path + os.sep + str(i) + '.pkl')
@@ -134,8 +150,8 @@ for i in range(args.offline_epochs):
 
 
 if args.online_epochs > 0 and args.online_pre_train_model_load:
-    actor_path = args.pre_train_model_path + args.exp_name + '/actor/' + str(args.online_pre_train_model_id) + '.pkl'
-    critic_path = args.pre_train_model_path + args.exp_name + '/critic/' + str(args.online_pre_train_model_id) + '.pkl'
+    actor_path = args.pre_train_model_path + args.exp_name + '/' + map_names + '_' + qualities + '/actor/' + str(args.online_pre_train_model_id) + '.pkl'
+    critic_path = args.pre_train_model_path + args.exp_name + '/' + map_names + '_' + qualities + '/critic/' + str(args.online_pre_train_model_id) + '.pkl'
     model.load_state_dict(torch.load(actor_path))
     critic_model.load_state_dict(torch.load(critic_path))
 
@@ -145,19 +161,22 @@ online_trainer = Trainer(model, critic_model, online_tconf)
 buffer.reset(num_keep=0, buffer_size=args.online_buffer_size)
 
 total_steps = 0
+time_to_threshold = 0
+epochs_above_threshold = 0
+step_when_reach = 0
 for i in range(args.online_epochs):
     sample_return, _, steps = rollout_worker.rollout(online_train_env, target_rtgs, train=True)
     total_steps += steps
     online_dataset = buffer.sample()
     online_actor_loss, online_critic_loss, entropy, ratio, confidence = online_trainer.train(online_dataset,
-                                                                                             args.online_train_critic)
+                                                                                             train_critic=args.online_train_critic)
     if args.save_log:
-        writter.add_scalar('online/{args.map_name}/online_actor_loss', online_actor_loss, total_steps)
-        writter.add_scalar('online/{args.map_name}/online_critic_loss', online_critic_loss, total_steps)
-        writter.add_scalar('online/{args.map_name}/entropy', entropy, total_steps)
-        writter.add_scalar('online/{args.map_name}/ratio', ratio, total_steps)
-        writter.add_scalar('online/{args.map_name}/confidence', confidence, total_steps)
-        writter.add_scalar('online/{args.map_name}/sample_return', sample_return, total_steps)
+        writter.add_scalar(f'{map_names}/online/online_actor_loss', online_actor_loss, total_steps)
+        writter.add_scalar(f'{map_names}/online/online_critic_loss', online_critic_loss, total_steps)
+        writter.add_scalar(f'{map_names}/online/entropy', entropy, total_steps)
+        writter.add_scalar(f'{map_names}/online/ratio', ratio, total_steps)
+        writter.add_scalar(f'{map_names}/online/confidence', confidence, total_steps)
+        writter.add_scalar(f'{map_names}/online/sample_return', sample_return, total_steps)
 
     # if online_dataset.max_rtgs > target_rtgs:
     #     target_rtgs = online_dataset.max_rtgs
@@ -165,9 +184,23 @@ for i in range(args.online_epochs):
     if i % args.online_eval_interval == 0:
         aver_return, aver_win_rate, _ = rollout_worker.rollout(eval_env, target_rtgs, train=False)
         print("online steps: %s, return: %s, eval_win_rate: %s" % (total_steps, aver_return, aver_win_rate))
+
+        if aver_return >= 18 and time_to_threshold == 0: # average return reach threshold just right
+            if epochs_above_threshold == 0: # record time steps of first reach
+                step_when_reach = total_steps
+            epochs_above_threshold += 1
+            if epochs_above_threshold >= 10: # average return reach threshold for at least 10 epochs
+                time_to_threshold = step_when_reach
+                print("time to threshold: {}".format(time_to_threshold))
+        else: # maybe reach threshold occasionally
+            epochs_above_threshold = 0
+            step_when_reach = 0
+
         if args.save_log:
-            writter.add_scalar('online/{args.map_name}/aver_return', aver_return.item(), total_steps)
-            writter.add_scalar('online/{args.map_name}/aver_win_rate', aver_win_rate, total_steps)
+            writter.add_scalar(f'{map_names}/online/aver_return', aver_return.item(), total_steps)
+            writter.add_scalar(f'{map_names}/online/aver_win_rate', aver_win_rate, total_steps)
+            writter.add_scalar(f'{map_names}/online/time_to_threshold', time_to_threshold, i)
+
 
 online_train_env.real_env.close()
 eval_env.real_env.close()

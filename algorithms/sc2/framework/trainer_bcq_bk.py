@@ -37,8 +37,7 @@ class Trainer:
     def __init__(self, model, config):
         self.model = model
         self.config = config
-        #self.writer = SummaryWriter(config.log_dir)
-        self.writer = config.writer
+        self.writter = SummaryWriter(config.log_dir)
 
         # take over whatever gpus are on the system
         self.device = 'cpu'
@@ -53,27 +52,21 @@ class Trainer:
         self.target_model.train(False)
         self.global_step = 0
 
-        self.n_correct = 0
-        self.n_total = 0
-
     def update_target(self):
         for param, target_param in zip(self.raw_model.parameters(), self.target_model.parameters()):
             target_param.data.copy_(self.config.tau * param.data + (1 - self.config.tau) * target_param.data)
 
 
-    def train(self, train_episodes, test_episodes, data_dir, num_agents, offline_iter):
+    def train(self, episodes, data_dir, num_agents):
         raw_model, config = self.raw_model, self.config
         raw_model.train(True)
 
-        def run_epoch(split, dataset):
-            is_train = split == 'train'
+        def run_epoch(dataset):
             loader = DataLoader(dataset, shuffle=True, pin_memory=True,
                                 batch_size=config.batch_size, drop_last=True,
                                 num_workers=self.config.num_workers)
             pbar = tqdm(enumerate(loader), total=len(loader))
-            logger.info("***** Training Begin ******")
-            n_correct = 0
-            n_total = 0
+            logger.info("***** Trainging Begin ******")
             for it, (s, o, pre_a, r, t, s_next, o_next, cur_a, next_ava) in pbar:
                 # [step_size, context_length, num_agents, data_dim]
                 s = s.to(self.device)
@@ -102,84 +95,55 @@ class Trainer:
                     next_action = (candidate_a * next_softmax_actor_q +
                                    (torch.ones(1, 1, 1, 1).to(self.device) - candidate_a) * -1e8).argmax(3, keepdim=True)
 
-                    correct_actions = next_action.eq(cur_a).int()
-                    self.n_correct += torch.sum(correct_actions)
-                    self.n_total += torch.sum(torch.ones_like(next_action))
-
                     next_q = torch.stack([self.target_model(o_next[:, :, j, :])[0]
                                              for j in range(config.num_agents)], dim=2)
                     next_q = next_q.gather(-1, next_action)
 
-                if is_train:
-                    with torch.set_grad_enabled(True):
-                        # Get current Q estimate
-                        current_q = torch.stack([raw_model(o[:, :, j, :])[0]
-                                                            for j in range(config.num_agents)], dim=2)
-                        current_actor_q = torch.stack([raw_model(o[:, :, j, :])[1]
-                                                            for j in range(config.num_agents)], dim=2)
-                        current_q = current_q.gather(3, cur_a)
+                with torch.set_grad_enabled(True):
+                    # Get current Q estimate
+                    current_q = torch.stack([raw_model(o[:, :, j, :])[0]
+                                                        for j in range(config.num_agents)], dim=2)
+                    current_actor_q = torch.stack([raw_model(o[:, :, j, :])[1]
+                                                        for j in range(config.num_agents)], dim=2)
+                    current_q = current_q.gather(3, cur_a)
 
-                        # Compute Q loss
-                        q_total_eval = raw_model.mix_model(current_q, s)
-                        q_total_next = self.target_model.mix_model(next_q, s_next)
-                        expected_q_total = r[:, :, 0, :] + config.gamma * (1 - done.min(2)[0]) * q_total_next
+                    # Compute Q loss
+                    q_total_eval = raw_model.mix_model(current_q, s)
+                    q_total_next = self.target_model.mix_model(next_q, s_next)
+                    expected_q_total = r[:, :, 0, :] + config.gamma * (1 - done.min(2)[0]) * q_total_next
 
-                        q_loss = F.smooth_l1_loss(q_total_eval, expected_q_total)
+                    q_loss = F.smooth_l1_loss(q_total_eval, expected_q_total)
 
-                        i_loss = F.nll_loss(F.log_softmax(current_actor_q, dim=-1).reshape(-1, raw_model.num_actions),
-                                            cur_a.reshape(-1))
+                    i_loss = F.nll_loss(F.log_softmax(current_actor_q, dim=-1).reshape(-1, raw_model.num_actions),
+                                        cur_a.reshape(-1))
 
-                        loss = q_loss + i_loss + 1e-2 * current_actor_q.pow(2).mean()
+                    loss = q_loss + i_loss + 1e-2 * current_actor_q.pow(2).mean()
 
-                    logger.info(" Training loss %f", loss.item())
-                    # self.writer.add_scalar('loss', loss.item(), self.global_step)
-                    self.global_step += 1
+                logger.info(" Training loss %f", loss.item())
+                # self.writter.add_scalar('loss', loss.item(), self.global_step)
+                self.global_step += 1
 
-                    # Optimize the Q
-                    self.optimizer.zero_grad()
-                    loss.backward()
-                    self.optimizer.step()
+                # Optimize the Q
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
 
-                    # report progress
-                    pbar.set_description(f"epoch {epoch + 1} iter {it}: train loss {loss.item():.5f}.")
-
+                # report progress
+                pbar.set_description(f"epoch {epoch + 1} iter {it}: train loss {loss.item():.5f}.")
 
 
         for epoch in range(config.max_epochs):
             bias = 0
             num_step = 20
-            # record correct actions made in the dataset
-            self.n_correct = 0
-            self.n_total = 0
             for i in range(num_step):
                 global_states, local_obss, actions, done_idxs, rewards, time_steps, next_global_states, next_local_obss, \
-                next_available_actions = load_data(int(train_episodes/num_step), bias,
+                next_available_actions = load_data(int(episodes/num_step), bias,
                                                    data_dir, n_agents=num_agents)
                 offline_dataset = SequentialDataset(1, global_states, local_obss, actions, done_idxs, rewards,
                                                     time_steps,
                                                     next_global_states, next_local_obss, next_available_actions)
-                run_epoch('train', offline_dataset)
-                bias += int(train_episodes/num_step)
+                run_epoch(offline_dataset)
+                bias += int(episodes/num_step)
             self.global_step += 1
-            accuracy = self.n_correct / self.n_total
-            logger.info(f"Training epoch {epoch + 1}: accuracy {accuracy:.5f}.")
-            self.writer.add_scalar("training accuracy", accuracy, offline_iter * config.max_epochs + epoch)
-
-            if test_episodes != 0:
-                self.n_correct = 0
-                self.n_total = 0
-                for i in range(num_step):
-                    global_states, local_obss, actions, done_idxs, rewards, time_steps, next_global_states, next_local_obss, \
-                    next_available_actions = load_data(int(test_episodes / num_step), bias,
-                                                       data_dir, n_agents=num_agents)
-                    offline_dataset = SequentialDataset(1, global_states, local_obss, actions, done_idxs, rewards,
-                                                        time_steps,
-                                                        next_global_states, next_local_obss, next_available_actions)
-                    run_epoch('test', offline_dataset)
-                    bias += int(test_episodes / num_step)
-                accuracy = self.n_correct / self.n_total
-                logger.info(f"Epoch {epoch + 1}: test accuracy {accuracy:.5f}.")
-                self.writer.add_scalar("test accuracy", accuracy, offline_iter * config.max_epochs + epoch)
-
         self.raw_model = raw_model
 

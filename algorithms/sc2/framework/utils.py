@@ -67,25 +67,22 @@ def get_dim_from_space(space):
         return space[0][0]
 
 
-def get_episode(index, bias, data_dir):
+def get_episode(index, bias, data_file):
 
     # episode = toy_example[index]
     begin_index = index + bias
     end_index = index + bias + 1
 
-    with h5py.File(data_dir, 'r') as data_file:
-
-        # TODO: handle online circumstances
-
-        step_cuts = list(data_file["step_cuts"])
-        share_obs = np.array(data_file["share_observations"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
-        obs = np.array(data_file["observations"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
-        actions = np.array(data_file["actions"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
-        rewards = np.array(data_file["rewards"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
-        terminals = np.array(data_file["terminals"])[:, step_cuts[begin_index]:step_cuts[end_index]].tolist()
-        ava_actions = np.array(data_file["available_actions"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
-        #np_episode_ids = np.array(data_file["episode_ids"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
-        #np_thread_ids = np.array(data_file["thread_ids"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
+    step_cuts = list(data_file["step_cuts"])
+    # (agent_num, step_length, attribute_dim)
+    share_obs = np.array(data_file["share_observations"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
+    obs = np.array(data_file["observations"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
+    actions = np.array(data_file["actions"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
+    rewards = np.array(data_file["rewards"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
+    terminals = np.array(data_file["terminals"])[:, step_cuts[begin_index]:step_cuts[end_index]].tolist()
+    ava_actions = np.array(data_file["available_actions"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
+    #np_episode_ids = np.array(data_file["episode_ids"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
+    #np_thread_ids = np.array(data_file["thread_ids"])[:, step_cuts[begin_index]:step_cuts[end_index], :].tolist()
 
     for agent_trajectory in rewards:
         rtgs = 0
@@ -107,41 +104,58 @@ def load_data(episode_num, bias, data_dir=None, min_return=0, n_agents=0):
     next_local_obss = [[] for i in range(n_agents)]
     next_available_actions = [[] for i in range(n_agents)]
 
-    for episode_idx in range(episode_num):
-        epi_share_obs, epi_obs, epi_actions, epi_rewards, epi_terminals, epi_ava_actions = get_episode(episode_idx, bias, data_dir)
-        assert len(epi_share_obs[0]) == len(epi_obs[0]) == len(epi_actions[0]) == len(epi_rewards[0]) == len(epi_terminals[0]) == len(epi_ava_actions[0]), \
-            "step lengths of attributes are not equal"
-        length = len(epi_share_obs[0])
-        for j in range(n_agents):
-            time_step = 0
-            agent_share_obs = epi_share_obs[j]
-            agent_obs = epi_obs[j]
-            agent_actions = epi_actions[j]
-            agent_rewards = epi_rewards[j]
-            agent_terminals = epi_terminals[j]
-            agent_ava_actions = epi_ava_actions[j]
-            for i in range(length):
-                g, o, a, r, d, ava = agent_share_obs[i], agent_obs[i], agent_actions[i], agent_rewards[i], agent_terminals[i], agent_ava_actions[i]
-                if i < length - 1:
-                    g_next = agent_share_obs[i + 1]
-                    o_next = agent_obs[i + 1]
-                    ava_next = agent_ava_actions[i + 1]
-                else:
-                    g_next = g
-                    o_next = o
-                    ava_next = ava
+    accumulated_episodes = 0
+    for path in os.listdir(data_dir):
+        data_file = h5py.File(os.path.join(data_dir, path), 'r')
+        episodes_in_file = len(list(data_file['step_cuts'])) - 1
+        if accumulated_episodes + episodes_in_file <= bias:
+            accumulated_episodes += episodes_in_file
+            continue
+        if accumulated_episodes >= episode_num:
+            break
+        cnt = 0
+        chunk_bias = bias - accumulated_episodes
+        while(accumulated_episodes < episode_num):
+            epi_share_obs, epi_obs, epi_actions, epi_rewards, epi_terminals, epi_ava_actions = get_episode(cnt, chunk_bias, data_file)
+            assert len(epi_share_obs[0]) == len(epi_obs[0]) == len(epi_actions[0]) == len(epi_rewards[0]) == len(epi_terminals[0]) == len(epi_ava_actions[0]), \
+                "step lengths of attributes are not equal"
+            length = len(epi_share_obs[0])
+            for j in range(n_agents):
+                time_step = 0
+                agent_share_obs = epi_share_obs[j]
+                agent_obs = epi_obs[j]
+                agent_actions = epi_actions[j]
+                agent_rewards = epi_rewards[j]
+                agent_terminals = epi_terminals[j]
+                agent_ava_actions = epi_ava_actions[j]
+                for i in range(length):
+                    g, o, a, r, d, ava = agent_share_obs[i], agent_obs[i], agent_actions[i], agent_rewards[i], agent_terminals[i], agent_ava_actions[i]
+                    if i < length - 1:
+                        g_next = agent_share_obs[i + 1]
+                        o_next = agent_obs[i + 1]
+                        ava_next = agent_ava_actions[i + 1]
+                    else:
+                        g_next = g
+                        o_next = o
+                        ava_next = ava
 
-                global_states[j].append(g)
-                local_obss[j].append(o)
-                actions[j].append(a)
-                rewards[j].append(r[0])
-                time_steps[j].append(time_step)
-                time_step += 1
-                next_global_states[j].append(g_next)
-                next_local_obss[j].append(o_next)
-                next_available_actions[j].append(ava_next)
-            done_idxs[j].append(len(global_states[j]))
+                    global_states[j].append(g)
+                    local_obss[j].append(o)
+                    actions[j].append(a)
+                    rewards[j].append(r[0])
+                    time_steps[j].append(time_step)
+                    time_step += 1
+                    next_global_states[j].append(g_next)
+                    next_local_obss[j].append(o_next)
+                    next_available_actions[j].append(ava_next)
+                done_idxs[j].append(len(global_states[j]))
 
+            accumulated_episodes += 1
+            cnt += 1
+            if cnt == episodes_in_file:
+                break
+
+        data_file.close()
 
     actions = list2array(actions).swapaxes(1, 0).tolist()
     done_idxs = list2array(done_idxs).swapaxes(1, 0).tolist()
@@ -165,31 +179,49 @@ def load_data_bc(episode_num, bias, data_dir=None, min_return=0):
     done_idxs = []
     time_steps = []
 
-    for episode_idx in range(episode_num):
-        epi_share_obs, epi_obs, epi_actions, epi_rewards, epi_terminals, epi_ava_actions = get_episode(episode_idx, bias, data_dir)
-        assert len(epi_share_obs[0]) == len(epi_obs[0]) == len(epi_actions[0]) == len(epi_rewards[0]) == len(
-            epi_terminals[0]) == len(epi_ava_actions[0]), \
-            "step lengths of attributes are not equal"
-        length = len(epi_share_obs[0])
-        n_agents = len(epi_share_obs)
-        for j in range(n_agents):
-            time_step = 0
-            agent_share_obs = epi_share_obs[j]
-            agent_obs = epi_obs[j]
-            agent_actions = epi_actions[j]
-            agent_rewards = epi_rewards[j]
-            agent_terminals = epi_terminals[j]
-            agent_ava_actions = epi_ava_actions[j]
-            for i in range(length):
-                g, o, a, r, d, ava = agent_share_obs[i], agent_obs[i], agent_actions[i], agent_rewards[i], \
-                                     agent_terminals[i], agent_ava_actions[i]
-                global_states.append(g)
-                local_obss.append(o)
-                actions.append(a)
-                rtgs.append(r[0])
-                time_steps.append(time_step)
-                time_step += 1
-            done_idxs.append(len(global_states))
+
+    accumulated_episodes = 0
+    for path in os.listdir(data_dir):
+        data_file = h5py.File(os.path.join(data_dir, path), 'r')
+        episodes_in_file = len(list(data_file['step_cuts'])) - 1
+        if accumulated_episodes + episodes_in_file <= bias:
+            accumulated_episodes += episodes_in_file
+            continue
+        if accumulated_episodes >= episode_num:
+            break
+        cnt = 0
+        chunk_bias = bias - accumulated_episodes
+        while(accumulated_episodes <= episode_num):
+            epi_share_obs, epi_obs, epi_actions, epi_rewards, epi_terminals, epi_ava_actions = get_episode(cnt, chunk_bias, data_file)
+            assert len(epi_share_obs[0]) == len(epi_obs[0]) == len(epi_actions[0]) == len(epi_rewards[0]) == len(
+                epi_terminals[0]) == len(epi_ava_actions[0]), \
+                "step lengths of attributes are not equal"
+            length = len(epi_share_obs[0])
+            n_agents = len(epi_share_obs)
+            for j in range(n_agents):
+                time_step = 0
+                agent_share_obs = epi_share_obs[j]
+                agent_obs = epi_obs[j]
+                agent_actions = epi_actions[j]
+                agent_rewards = epi_rewards[j]
+                agent_terminals = epi_terminals[j]
+                agent_ava_actions = epi_ava_actions[j]
+                for i in range(length):
+                    g, o, a, r, d, ava = agent_share_obs[i], agent_obs[i], agent_actions[i], agent_rewards[i], \
+                                         agent_terminals[i], agent_ava_actions[i]
+                    global_states.append(g)
+                    local_obss.append(o)
+                    actions.append(a)
+                    rtgs.append(r[0])
+                    time_steps.append(time_step)
+                    time_step += 1
+                done_idxs.append(len(global_states))
+            accumulated_episodes += 1
+            cnt += 1
+            if cnt == episodes_in_file:
+                break
+
+        data_file.close()
 
     states = np.concatenate((global_states, local_obss), axis=1)
 
@@ -198,7 +230,7 @@ def load_data_bc(episode_num, bias, data_dir=None, min_return=0):
 def padding_obs(obs, target_dim):
     len_obs = np.shape(obs)[-1]
     if len_obs > target_dim:
-        print("target_dim (%s) too small, obs dim is %s." % (target_dim, len(obs)))
+        print("target_dim (%s) too small, obs dim is %s." % (target_dim, len_obs))
         raise NotImplementedError
     elif len_obs < target_dim:
         padding_size = target_dim - len_obs

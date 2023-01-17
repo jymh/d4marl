@@ -20,18 +20,19 @@ class RolloutWorker:
             self.model = torch.nn.DataParallel(model).to(self.device)
             self.critic_model = torch.nn.DataParallel(critic_model).to(self.device)
 
-    def rollout(self, env, ret, train=True, random_rate=0.):
+
+    def rollout(self, env, ret, train=True, random_rate=0., threshold=18):
         self.model.train(False)
         self.critic_model.train(False)
 
-        T_rewards, T_wins, steps, episode_dones = 0., 0., 0, np.zeros(env.n_threads)
+        T_rewards, T_wins, steps, time_to_threshold, episode_dones = 0., 0., 0, 0, np.zeros(env.n_threads)
 
         obs, share_obs, available_actions = env.real_env.reset()
         obs = padding_obs(obs, self.local_obs_dim)
         share_obs = padding_obs(share_obs, self.global_obs_dim)
         available_actions = padding_ava(available_actions, self.action_dim)
 
-        # x: (n_threads, n_agent, context_lengrh, dim)
+        # x: (n_threads, n_agent, context_length, dim)
         global_states = torch.from_numpy(share_obs).to(self.device).unsqueeze(2)
         local_obss = torch.from_numpy(obs).to(self.device).unsqueeze(2)
         rtgs = np.ones((env.n_threads, env.num_agents, 1, 1)) * ret
@@ -63,10 +64,13 @@ class RolloutWorker:
                 v_value = v_value.view((env.n_threads, env.num_agents, -1)).cpu().numpy()
                 self.buffer.insert(cur_global_obs, cur_local_obs, action, rewards, dones, cur_ava, v_value)
 
+            steps_above_threshold = [0] * env.n_threads
             for n in range(env.n_threads):
+                thread_t2thresh = 0
                 if not episode_dones[n]:
                     steps += 1
                     T_rewards += np.mean(rewards[n])
+
                     if np.all(dones[n]):
                         episode_dones[n] = 1
                         if infos[n][0]['won']:

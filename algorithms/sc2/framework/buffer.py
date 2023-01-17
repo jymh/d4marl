@@ -1,6 +1,7 @@
 import torch
 import copy
 import glob
+import h5py
 import numpy as np
 from torch.utils.data import Dataset
 from .utils import padding_obs, padding_ava, get_episode
@@ -229,16 +230,32 @@ class MadtReplayBuffer:
     def insert(self, global_obs, local_obs, action, reward, done, available_actions, v_value):
         n_threads, n_agents = np.shape(reward)[0], np.shape(reward)[1]
         for n in range(n_threads):
-            if len(self.episodes) < n + 1:
+            if len(self.episodes) < n+1:
                 self.episodes.append([])
                 self.episode_dones.append(False)
             if not self.episode_dones[n]:
-                for i in range(n_agents):
-                    if len(self.episodes[n]) < i + 1:
-                        self.episodes[n].append([])
-                    step = [global_obs[n][i].tolist(), local_obs[n][i].tolist(), action[n][i].tolist(),
-                            reward[n][i].tolist(), done[n][i], available_actions[n][i].tolist(), v_value[n][i].tolist()]
-                    self.episodes[n][i].append(step)
+                step_global_obs = np.expand_dims(global_obs[n], axis=1)
+                step_local_obs = np.expand_dims(local_obs[n], axis=1)
+                step_action = np.expand_dims(action[n], axis=1)
+                step_reward = np.expand_dims(reward[n], axis=1)
+                step_done = np.expand_dims(done[n], axis=1)
+                step_available_actions = np.expand_dims(available_actions[n], axis=1)
+                step_v_value = np.expand_dims(v_value[n], axis=1)
+                if len(self.episodes[n]) == 0:
+                    step = [step_global_obs.tolist(), step_local_obs.tolist(),
+                            step_action.tolist(), step_reward.tolist(),
+                            step_done, step_available_actions.tolist(),
+                            step_v_value.tolist()]
+                    self.episodes[n] = step
+                else:
+                    # concatenate on step dimension
+                    self.episodes[n][0] = np.concatenate((np.array(self.episodes[n][0]), step_global_obs), axis=1).tolist()
+                    self.episodes[n][1] = np.concatenate((np.array(self.episodes[n][1]), step_local_obs), axis=1).tolist()
+                    self.episodes[n][2] = np.concatenate((np.array(self.episodes[n][2]), step_action), axis=1).tolist()
+                    self.episodes[n][3] = np.concatenate((np.array(self.episodes[n][3]), step_reward), axis=1).tolist()
+                    self.episodes[n][4] = np.concatenate((np.array(self.episodes[n][4]), step_done), axis=1).tolist()
+                    self.episodes[n][5] = np.concatenate((np.array(self.episodes[n][5]), step_available_actions), axis=1).tolist()
+                    self.episodes[n][6] = np.concatenate((np.array(self.episodes[n][6]), step_v_value), axis=1).tolist()
                 if np.all(done[n]):
                     self.episode_dones[n] = True
                     if self.size > self.buffer_size:
@@ -259,21 +276,35 @@ class MadtReplayBuffer:
             self.data = [self.data[idx] for idx in keep_idx]
 
     # offline data size could be large than buffer size
-    def load_offline_data(self, data_dir, offline_episode_num, max_epi_length=400):
-        for j in range(len(data_dir)):
-            path_file = data_dir[j]
-            # for file in sorted(path_files):
-            for i in range(offline_episode_num[j]):
-                share_obs, obs, actions, rewards, terminals, ava_actions = get_episode(i, 0, path_file)
+    def load_offline_data(self, data_dir, offline_episode_num, offline_test_episodes, max_epi_length=400):
+        map_id = 0
+        for map_name in data_dir.keys():
+            map_data_files = data_dir[map_name]
+            accumulated_episodes = 0
+            for j in range(len(map_data_files)):
+                path_file = map_data_files[j]
+                data_file = h5py.File(path_file, 'r')
+                episodes_in_file = len(list(data_file['step_cuts'])) - 1
+                # for file in sorted(path_files):
+                cnt = 0
+                while(accumulated_episodes <= offline_episode_num[map_id] + offline_test_episodes):
+                    share_obs, obs, actions, rewards, terminals, ava_actions = get_episode(cnt, 0, data_file)
 
-                # padding obs
-                share_obs = padding_obs(share_obs, self.global_obs_dim)
-                obs = padding_obs(obs, self.local_obs_dim)
-                ava_actions = padding_ava(ava_actions, self.action_dim)
+                    # padding obs
+                    share_obs = padding_obs(share_obs, self.global_obs_dim)
+                    obs = padding_obs(obs, self.local_obs_dim)
+                    ava_actions = padding_ava(ava_actions, self.action_dim)
 
-                episode = [share_obs, obs, actions, rewards, terminals, ava_actions]
+                    episode = [share_obs, obs, actions, rewards, terminals, ava_actions]
 
-                self.data.append(episode)
+                    # self.data: (episode_num, attribute_num, agent_num, step_length, attribute_dim)
+                    self.data.append(episode)
+
+                    accumulated_episodes += 1
+                    cnt += 1
+                    if cnt == episodes_in_file:
+                        break
+            map_id += 1
 
     def sample(self):
         # adding elements with list will be faster
@@ -335,13 +366,23 @@ class MadtReplayBuffer:
     # from [g, o, a, r, d, ava]/[g, o, a, r, d, ava, v] to [g, o, a, r, d, ava, v, rtg, ret, adv]
     def preprocess_episode(self, index):
         episode = copy.deepcopy(self.data[index])
-        share_obs, obs, actions, rewards, terminals, ava_actions = episode
-        num_agent = np.shape(share_obs)[0]
-        step_length = np.shape(share_obs)[1]
+        if len(episode) == 6:  #offline
+            share_obs, obs, actions, rewards, terminals, ava_actions = episode
+            num_agent = np.shape(share_obs)[0]
+            step_length = np.shape(share_obs)[1]
+            values = [[] for i in range(num_agent)]
+            offline_flag = True
+        elif len(episode) == 7:  #online
+            share_obs, obs, actions, rewards, terminals, ava_actions, values = episode
+            num_agent = np.shape(share_obs)[0]
+            step_length = np.shape(share_obs)[1]
+            offline_flag = False
+        else:
+            raise NotImplementedError
+
 
         # TODO: handle online circumstances
 
-        values = [[] for i in range(num_agent)]
         rtgs = [[] for i in range(num_agent)]
         rets = [[] for i in range(num_agent)]
         advs = [[] for i in range(num_agent)]
@@ -350,12 +391,16 @@ class MadtReplayBuffer:
             ret = 0.
             adv = 0.
             rewards_traj = rewards[i]
-            agent_values = values[i] = [[] for _ in range(step_length)]
+            if offline_flag:
+                agent_values = values[i] = [[] for _ in range(step_length)]
+            else:
+                agent_values = values[i]
             agent_rtgs = rtgs[i] = [[] for _ in range(step_length)]
             agent_rets = rets[i] = [[] for _ in range(step_length)]
             agent_advs = advs[i] = [[] for _ in range(step_length)]
             for j in reversed(range(len(rewards_traj))):
-                agent_values[j] = [0.] # offline, give a fake v_value, unused
+                if offline_flag:
+                    agent_values[j] = [0.] # offline, give a fake v_value, unused
 
                 reward = rewards_traj[j][0]
                 rtg += reward

@@ -9,6 +9,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from torch.utils.data.dataloader import DataLoader
+from torch.nn import functional as F
 from tensorboardX.writer import SummaryWriter
 from framework.utils import load_data_bc
 
@@ -43,7 +44,8 @@ class Trainer:
     def __init__(self, model, config):
         self.model = model
         self.config = config
-        self.writter = SummaryWriter(config.log_dir)
+        #self.writer = SummaryWriter(config.log_dir)
+        self.writer = config.writer
         self.global_step = 0
 
         # take over whatever gpus are on the system
@@ -51,6 +53,8 @@ class Trainer:
         if torch.cuda.is_available():
             self.device = torch.cuda.current_device()
             self.model = torch.nn.DataParallel(self.model).to(self.device)
+        self.n_correct = 0
+        self.n_total = 0
 
     def save_checkpoint(self):
         # DataParallel wrappers keep raw model object in .module attribute
@@ -58,7 +62,7 @@ class Trainer:
         logger.info("saving %s", self.config.ckpt_path)
         # torch.save(raw_model.state_dict(), self.config.ckpt_path)
 
-    def train(self, episodes, data_dir, num_agents):
+    def train(self, train_episodes, test_episodes, data_dir, num_agents, offline_iter):
         model, config = self.model, self.config
         raw_model = model.module if hasattr(self.model, "module") else model
         optimizer = raw_model.configure_optimizers(config)
@@ -73,7 +77,7 @@ class Trainer:
 
             losses = []
             pbar = tqdm(enumerate(loader), total=len(loader)) if is_train else enumerate(loader)
-            logger.info("***** Trainging Begin ******")
+            logger.info("***** Training Begin ******")
             for it, (x, y, r, t) in pbar:
                 # place data on the correct device
                 x = x.to(self.device)
@@ -85,10 +89,15 @@ class Trainer:
                 with torch.set_grad_enabled(is_train):
                     # logits, loss = model(x, y, r)
                     logits, loss = model(x, y, y, r, t)
+                    softmax_logits = F.softmax(logits)
+                    next_actions = softmax_logits.argmax(dim=-1, keepdim=True)
+                    self.n_correct += torch.sum(y.eq(next_actions).int())
+                    self.n_total += torch.sum(torch.ones_like(y))
+
                     loss = loss.mean()  # collapse all losses if they are scattered on multiple gpus
                     losses.append(loss.item())
                 logger.info(" Training loss %f", loss.item())
-                # self.writter.add_scalars("training loss", {"training loss": loss.item()}, epoch_num * self.config.batch_size)
+                # self.writer.add_scalars("training loss", {"training loss": loss.item()}, epoch_num * self.config.batch_size)
 
                 if is_train:
                     # backprop and update the parameters
@@ -126,14 +135,36 @@ class Trainer:
         for epoch in range(config.max_epochs):
             bias = 0
             num_step = 20
+            self.n_correct = 0
+            self.n_total = 0
+            # training steps
             for i in range(num_step):
-                states, actions, done_idxs, rtgs, timesteps = load_data_bc(int(episodes/num_step),
+                states, actions, done_idxs, rtgs, timesteps = load_data_bc(int(train_episodes/num_step),
                                                                            bias,
                                                                            data_dir)
                 offline_dataset = StateActionReturnDataset(states, 1, actions, done_idxs, rtgs, timesteps)
                 run_epoch('train', offline_dataset)
-                bias += int(episodes / num_step)
+                bias += int(train_episodes / num_step)
             self.global_step += 1
+            accuracy = self.n_correct / self.n_total
+            logger.info(f"Training epoch {epoch + 1}: accuracy {accuracy:.5f}.")
+            self.writer.add_scalar("training accuracy", accuracy, offline_iter * config.max_epochs + epoch)
+
+            # test steps
+            if test_episodes != 0:
+                self.n_correct = 0
+                self.n_total = 0
+                for i in range(num_step):
+                    states, actions, done_idxs, rtgs, timesteps = load_data_bc(int(test_episodes / num_step),
+                                                                               bias,
+                                                                               data_dir)
+                    offline_dataset = StateActionReturnDataset(states, 1, actions, done_idxs, rtgs, timesteps)
+                    run_epoch('test', offline_dataset)
+                    bias += int(test_episodes / num_step)
+                self.global_step += 1
+                accuracy = self.n_correct / self.n_total
+                logger.info(f"Epoch {epoch + 1}: test accuracy {accuracy:.5f}.")
+                self.writer.add_scalar("testing accuracy", accuracy, offline_iter * config.max_epochs + epoch)
 
 
     def update_target(self):

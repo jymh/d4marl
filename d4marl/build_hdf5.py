@@ -4,6 +4,8 @@ import torch
 import h5py
 import numpy as np
 
+episodes_in_one_h5 = 1000 # number of episodes stored in one h5 file
+
 obs = []
 share_obs = []
 rewards = []

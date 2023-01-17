@@ -13,7 +13,7 @@ def get_keys(h5file):
     h5file.visititems(visitor)
     return keys
 
-with h5py.File('./maze2d-open-sparse.hdf5', 'r') as dataset_file:
+with h5py.File('/home/lhmeng/Datasetproj/on-policy/offline_datasets/hdf5_files/3m_no_quality.hdf5', 'r') as dataset_file:
     '''
     for k in get_keys(dataset_file):
         try:

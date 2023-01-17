@@ -28,11 +28,13 @@ parser.add_argument('--model_type', type=str, default='reward_conditioned')
 
 parser.add_argument('--offline_data_dir', type=str, default='../../offline_data/3m/')
 parser.add_argument('--offline_episodes', type=int, default=1000)
+parser.add_argument('--offline_test_episodes', type=int, default=0)
 parser.add_argument('--offline_episode_bias', type=int, default=0)
-parser.add_argument('--offline_batch_size', type=int, default=16)  # episodes used for offline train
+parser.add_argument('--offline_batch_size', type=int, default=128)  # episodes used for offline train
 parser.add_argument('--offline_epochs', type=int, default=100)
 parser.add_argument('--offline_lr', type=float, default=1e-4)
-parser.add_argument('--offline_log_dir', type=str, default='./offline_logs/')
+parser.add_argument('--offline_log_dir', type=str, default='./offline_logs/', help='directory of tensorboard logs')
+parser.add_argument('--offline_log_filename', type=str, default='baseline.log', help='log file of runtime information')
 parser.add_argument('--offline_eval_interval', type=int, default=1)
 parser.add_argument('--offline_target_interval', type=int, default=20)
 
@@ -71,7 +73,7 @@ from envs.env import Env
 if __name__ == '__main__':
     set_seed(args.seed)
 
-    logging.basicConfig(filename='ma_dt.log', filemode='a',
+    logging.basicConfig(filename=args.offline_log_filename, filemode='a',
                         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
                         datefmt="%m/%d/%Y %H:%M:%S",
                         level=logging.INFO)
@@ -87,6 +89,7 @@ if __name__ == '__main__':
     buffer = ReplayBuffer(online_train_env.num_agents, args.buffer_size, args.context_length)
     buffer.reset()
 
+    print("using algorithm: {}".format(args.algorithm))
     cur_time = datetime.now() + timedelta(hours=0)
     args.offline_log_dir += args.algorithm + "_" + args.offline_data_dir.split("/")[-2] + "_" + str(args.seed)
     args.offline_log_dir += cur_time.strftime("[%m-%d]%H.%M.%S")
@@ -135,7 +138,7 @@ if __name__ == '__main__':
 
         rollout_worker = RolloutWorker(model, buffer, args.context_length)
         offline_tconf = TrainerConfig(max_epochs=1, num_agents=num_agents, batch_size=args.offline_batch_size, learning_rate=args.offline_lr, num_workers=1,
-                                      seed=args.seed, game=args.game, log_dir=args.offline_log_dir)
+                                      seed=args.seed, game=args.game, log_dir=args.offline_log_dir, writer=writer)
         offline_trainer = Trainer(model, offline_tconf)
         gc.collect()
 
@@ -156,7 +159,7 @@ if __name__ == '__main__':
         rollout_worker = RolloutWorker(model, buffer, args.context_length)
 
         offline_tconf = TrainerConfig(max_epochs=1, num_agents=num_agents, batch_size=args.offline_batch_size, learning_rate=args.offline_lr, num_workers=1,
-                                      seed=args.seed, game=args.game, log_dir=args.offline_log_dir)
+                                      seed=args.seed, game=args.game, log_dir=args.offline_log_dir, writer=writer)
         offline_trainer = Trainer(model, offline_tconf)
         gc.collect()
 
@@ -173,7 +176,7 @@ if __name__ == '__main__':
         offline_tconf = TrainerConfig(max_epochs=1, batch_size=args.offline_batch_size, learning_rate=args.offline_lr,
                                       lr_decay=True, warmup_tokens=512 * 20,
                                       num_workers=4, seed=args.seed, model_type=args.model_type, game=args.game,
-                                      log_dir=args.offline_log_dir)
+                                      log_dir=args.offline_log_dir, writer=writer)
         offline_trainer = Trainer(model, offline_tconf)
         gc.collect()
 
@@ -193,12 +196,13 @@ if __name__ == '__main__':
         mconf = None
     print(5)
 
-    print("offline total episodes: ", buffer.cur_size)
+    #print("offline total episodes: ", buffer.cur_size)
     offline_steps = 0
     for i in range(args.offline_epochs):
         print("offline iter: ", i + 1)
 
-        offline_trainer.train(episodes=args.offline_episodes, data_dir=args.offline_data_dir, num_agents=num_agents)
+        offline_trainer.train(train_episodes=args.offline_episodes, test_episodes=args.offline_test_episodes,
+                              data_dir=args.offline_data_dir, num_agents=num_agents, offline_iter=i)
 
         if mconf is not None and (i + 1) % mconf.target_interval == 0:
             offline_trainer.update_target()

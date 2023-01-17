@@ -1,1 +1,1 @@
-# D4RL: A Dataset and Benchmark for Offline Multi-Agent Reinforcement Learning
+# D4MRL: A Dataset and Benchmark for Offline Multi-Agent Reinforcement Learning

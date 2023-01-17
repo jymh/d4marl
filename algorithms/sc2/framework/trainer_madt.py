@@ -45,18 +45,39 @@ class Trainer:
         self.raw_critic_model = self.critic_model.module if hasattr(self.critic_model, "module") else self.critic_model
         self.critic_optimizer = self.raw_critic_model.configure_optimizers(config, config.learning_rate * 10)
 
-    def train(self, dataset, train_critic=True):
+        self.train_n_correct = 0
+        self.train_n_total = 0
+        self.test_n_correct = 0
+        self.test_n_total = 0
+
+    def train(self, dataset, test_episodes=0, train_critic=True):
         model, critic_model, config = self.raw_model, self.raw_critic_model, self.config
         target_model = copy.deepcopy(model)
         target_model.train(False)
+
+        self.train_n_correct = 0
+        self.train_n_total = 0
+        self.test_n_correct = 0
+        self.test_n_total = 0
 
         def run_epoch():
             model.train(True)
             critic_model.train(True)
             if self.config.mode == "offline":
-                loader = DataLoader(dataset, shuffle=True, pin_memory=True, drop_last=True,
-                                    batch_size=config.batch_size,
-                                    num_workers=config.num_workers)
+                if test_episodes != 0:
+                    test_size = test_episodes
+                    train_size = len(dataset) - test_size
+                    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+                    loader = DataLoader(train_dataset, shuffle=True, pin_memory=True, drop_last=True,
+                                        batch_size=config.batch_size,
+                                        num_workers=config.num_workers)
+                    test_loader = DataLoader(test_dataset, shuffle=True, pin_memory=True, drop_last=True,
+                                        batch_size=config.batch_size,
+                                        num_workers=config.num_workers)
+                else:
+                    loader = DataLoader(dataset, shuffle=True, pin_memory=True, drop_last=True,
+                                        batch_size=config.batch_size,
+                                        num_workers=config.num_workers)
             elif self.config.mode == "online":
                 loader = DataLoader(dataset, shuffle=True, pin_memory=True, drop_last=True,
                                     batch_size=dataset.__len__(),
@@ -89,11 +110,18 @@ class Trainer:
                 with torch.set_grad_enabled(True):
                     logits = model(o, pre_a, rtg, t)
                     if self.config.mode == "offline":
-                        loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), a.reshape(-1))
-                        entropy_info = 0.
-                        ratio_info = 0.
-                        confidence_info = 0.
+                        if test_episodes != 0:
+                            with torch.set_grad_enabled(False):
+                                next_actions = F.softmax(logits).argmax(dim=-1, keepdim=True)
+                                self.train_n_correct += torch.sum(a.eq(next_actions).int())
+                                self.train_n_total += torch.sum(torch.ones_like(a))
+                        with torch.set_grad_enabled(True):
+                            loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), a.reshape(-1))
+                            entropy_info = 0.
+                            ratio_info = 0.
+                            confidence_info = 0.
                     elif self.config.mode == "online":
+                        assert test_episodes == 0, "Test while online finetune has not been implemented yet."
                         adv = adv.reshape(-1, adv.size(-1))
 
                         logits[ava == 0] = -1e10
@@ -148,6 +176,32 @@ class Trainer:
 
                 # report progress
                 pbar.set_description(f"epoch {epoch + 1} iter {it}: train loss {loss.item():.5f}.")
+
+            if test_episodes != 0:
+                for it, (s, o, a, r, ava, v, rtg, ret, adv, t, pre_a, next_s, next_rtg, done) in tqdm(enumerate(test_loader), total=len(test_loader)):
+                    # place data on the correct device
+                    s = s.to(self.device)
+                    o = o.to(self.device)
+                    a = a.to(self.device)
+                    r = r.to(self.device)
+                    ava = ava.to(self.device)
+                    v = v.to(self.device)
+                    rtg = rtg.to(self.device)
+                    ret = ret.to(self.device)
+                    adv = adv.to(self.device)
+                    t = t.to(self.device)
+                    pre_a = pre_a.to(self.device)
+                    next_s = next_s.to(self.device)
+                    next_rtg = next_rtg.to(self.device)
+                    done = done.to(self.device)
+
+                    # update actor
+                    with torch.set_grad_enabled(False):
+                        logits = model(o, pre_a, rtg, t)
+                        next_actions = F.softmax(logits).argmax(dim=-1, keepdim=True)
+                        self.test_n_correct += torch.sum(a.eq(next_actions).int())
+                        self.test_n_total += torch.sum(torch.ones_like(a))
+
             return loss_info, critic_loss_info, entropy_info, ratio_info, confidence_info
 
         actor_loss_ret, critic_loss_ret, entropy, ratio, confidence = 0., 0., 0., 0., 0.

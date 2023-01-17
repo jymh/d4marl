@@ -40,8 +40,8 @@ class Trainer:
     def __init__(self, model, config):
         self.model = model
         self.config = config
-        # self.writter = SummaryWriter(config.log_dir)
-        self.writter = config.writer
+        # self.writer = SummaryWriter(config.log_dir)
+        self.writer = config.writer
         # take over whatever gpus are on the system
         self.device = 'cpu'
         if torch.cuda.is_available():
@@ -64,20 +64,24 @@ class Trainer:
                                         self.raw_model.q2.parameters(),
                                         self.mix_model.parameters())
 
+        self.n_correct = 0
+        self.n_total = 0
+
     def update_target(self):
         for param, target_param in zip(self.raw_model.parameters(), self.target_model.parameters()):
             target_param.data.copy_(self.config.tau * param.data + (1 - self.config.tau) * target_param.data)
 
-    def train(self, episodes, data_dir, num_agents):
+    def train(self, train_episodes, test_episodes, data_dir, num_agents, offline_iter):
         raw_model, config = self.raw_model, self.config
         raw_model.train(True)
 
-        def run_epoch(dataset):
+        def run_epoch(split, dataset):
+            is_train = split == 'train'
             loader = DataLoader(dataset, shuffle=False, pin_memory=True,
                                 batch_size=config.batch_size, drop_last=True,
                                 num_workers=self.config.num_workers)
             pbar = tqdm(enumerate(loader), total=len(loader))
-            logger.info("***** Trainging Begin ******")
+            logger.info("***** Training Begin ******")
             for it, (s, o, pre_a, r, t, s_next, o_next, cur_a, next_ava) in pbar:
                 # [step_size, context_length, num_agents, data_dim]
                 s = s.to(self.device)
@@ -107,100 +111,131 @@ class Trainer:
                     next_actor = torch.stack([self.target_model.pi(o_next[:, :, j, :])
                                               for j in range(config.num_agents)], dim=2)
                     next_action = next_actor.argmax(dim=-1, keepdim=True)
+
+                    correct_actions = next_action.eq(cur_a).int()
+                    self.n_correct += torch.sum(correct_actions)
+                    self.n_total += torch.sum(torch.ones_like(next_action))
+
                     beta = 10
                     target_q = target_q.gather(-1, next_action)
                     q_total_next = (w * target_q + b).sum(dim=2, keepdim=False).reshape(-1, 1)
                     backup = r[:, :, 0, :] + config.gamma * (1 - done.min(2)[0]) * q_total_next * F.softmax(
                         q_total_next / beta, dim=0).reshape(-1, 1)  # KL
 
-                with torch.set_grad_enabled(True):
-                    # Get current Q estimate
+                if is_train:
+                    with torch.set_grad_enabled(True):
+                        # Get current Q estimate
+                        eval_q1 = torch.stack([raw_model.q1(o[:, :, j, :])
+                                               for j in range(config.num_agents)], dim=2)
+                        eval_q2 = torch.stack([raw_model.q2(o[:, :, j, :])
+                                               for j in range(config.num_agents)], dim=2)
+
+                        current_q1 = eval_q1.gather(-1, cur_a)
+                        current_q2 = eval_q2.gather(-1, cur_a)
+
+                        q1_total_eval = (w * current_q1 + b).sum(dim=2, keepdim=False).reshape(-1, 1)
+                        q2_total_eval = (w * current_q2 + b).sum(dim=2, keepdim=False).reshape(-1, 1)
+
+                        index = torch.zeros_like(q1_total_eval).to(self.device)
+
+                        for i in range(1, index.shape[0]):
+                            if done.min(2)[0].reshape(-1)[i] == 1:
+                                index[i][0] = 0
+                            else:
+                                index[i][0] = index[i - 1][0] + 1
+
+                        decay = torch.ones_like(q1_total_eval) * config.lamda * config.gamma
+                        decay = torch.pow(decay, index)
+
+                        loss_q1 = ((decay * (q1_total_eval - backup)) ** 2).mean()
+                        loss_q2 = ((decay * (q2_total_eval - backup)) ** 2).mean()
+                        loss_q = loss_q1 + loss_q2
+
+                    for p in self.q_params:
+                        p.requires_grad = True
+                    self.optimizer.zero_grad()
+                    loss_q.backward()
+                    grad_norm_clip = config.grad_norm_clip[0]
+                    torch.nn.utils.clip_grad_norm_(raw_model.parameters(), grad_norm_clip)
+                    self.optimizer.step()
+
+                    # calculate the actor loss
+                    for p in self.q_params:
+                        p.requires_grad = False
+                    w, b = self.mix_model(s)
+
                     eval_q1 = torch.stack([raw_model.q1(o[:, :, j, :])
                                            for j in range(config.num_agents)], dim=2)
+
                     eval_q2 = torch.stack([raw_model.q2(o[:, :, j, :])
                                            for j in range(config.num_agents)], dim=2)
 
-                    current_q1 = eval_q1.gather(-1, cur_a)
-                    current_q2 = eval_q2.gather(-1, cur_a)
+                    actor = torch.stack([self.raw_model.pi(o[:, :, j, :])
+                                         for j in range(config.num_agents)], dim=2)
+                    pi_a = actor.argmax(dim=-1, keepdim=True)
 
-                    q1_total_eval = (w * current_q1 + b).sum(dim=2, keepdim=False).reshape(-1, 1)
-                    q2_total_eval = (w * current_q2 + b).sum(dim=2, keepdim=False).reshape(-1, 1)
+                    q1_pi = (w * eval_q1).gather(-1, pi_a)
+                    q2_pi = (w * eval_q2).gather(-1, pi_a)
+                    v_pi = torch.min(q1_pi, q2_pi)
 
-                    index = torch.zeros_like(q1_total_eval).to(self.device)
+                    beta = 0.5
+                    q1_old_actions = (w * eval_q1).gather(-1, cur_a)
+                    q2_old_actions = (w * eval_q2).gather(-1, cur_a)
+                    q_old_actions = torch.min(q1_old_actions, q2_old_actions)
+                    adv_pi = q_old_actions - v_pi
 
-                    for i in range(1, index.shape[0]):
-                        if done.min(2)[0].reshape(-1)[i] == 1:
-                            index[i][0] = 0
-                        else:
-                            index[i][0] = index[i - 1][0] + 1
+                    weights = F.softmax(adv_pi / beta, dim=0)  # KL
 
-                    decay = torch.ones_like(q1_total_eval) * config.lamda * config.gamma
-                    decay = torch.pow(decay, index)
+                    loss_pi = (-F.log_softmax(actor, dim=-1).gather(-1, cur_a) * weights.shape[0] * weights.detach()).mean()
 
-                    loss_q1 = ((decay * (q1_total_eval - backup)) ** 2).mean()
-                    loss_q2 = ((decay * (q2_total_eval - backup)) ** 2).mean()
-                    loss_q = loss_q1 + loss_q2
+                    for p in self.q_params:
+                        p.requires_grad = True
 
-                for p in self.q_params:
-                    p.requires_grad = True
-                self.optimizer.zero_grad()
-                loss_q.backward()
-                grad_norm_clip = config.grad_norm_clip[0]
-                torch.nn.utils.clip_grad_norm_(raw_model.parameters(), grad_norm_clip)
-                self.optimizer.step()
-
-                # calculate the actor loss
-                for p in self.q_params:
-                    p.requires_grad = False
-                w, b = self.mix_model(s)
-
-                eval_q1 = torch.stack([raw_model.q1(o[:, :, j, :])
-                                       for j in range(config.num_agents)], dim=2)
-
-                eval_q2 = torch.stack([raw_model.q2(o[:, :, j, :])
-                                       for j in range(config.num_agents)], dim=2)
-
-                actor = torch.stack([self.raw_model.pi(o[:, :, j, :])
-                                     for j in range(config.num_agents)], dim=2)
-                pi_a = actor.argmax(dim=-1, keepdim=True)
-
-                q1_pi = (w * eval_q1).gather(-1, pi_a)
-                q2_pi = (w * eval_q2).gather(-1, pi_a)
-                v_pi = torch.min(q1_pi, q2_pi)
-
-                beta = 0.5
-                q1_old_actions = (w * eval_q1).gather(-1, cur_a)
-                q2_old_actions = (w * eval_q2).gather(-1, cur_a)
-                q_old_actions = torch.min(q1_old_actions, q2_old_actions)
-                adv_pi = q_old_actions - v_pi
-
-                weights = F.softmax(adv_pi / beta, dim=0)  # KL
-
-                loss_pi = (-F.log_softmax(actor, dim=-1).gather(-1, cur_a) * weights.shape[0] * weights.detach()).mean()
-
-                for p in self.q_params:
-                    p.requires_grad = True
-
-                self.actor_optimizer.zero_grad()
-                loss_pi.backward()
-                grad_norm_clip = config.grad_norm_clip[0]
-                torch.nn.utils.clip_grad_norm_(raw_model.parameters(), grad_norm_clip)
-                self.actor_optimizer.step()
-                # report progress
-                pbar.set_description(
-                    f"epoch {epoch + 1} iter {it}: q loss {loss_q.item():.5f} .pi loss {loss_pi.item():.5f} ")
+                    self.actor_optimizer.zero_grad()
+                    loss_pi.backward()
+                    grad_norm_clip = config.grad_norm_clip[0]
+                    torch.nn.utils.clip_grad_norm_(raw_model.parameters(), grad_norm_clip)
+                    self.actor_optimizer.step()
+                    # report progress
+                    pbar.set_description(
+                        f"epoch {epoch + 1} iter {it}: q loss {loss_q.item():.5f} .pi loss {loss_pi.item():.5f} ")
 
         for epoch in range(config.max_epochs):
             bias = 0
             num_step = 20
+            # record correct actions made in the dataset
+            self.n_correct = 0
+            self.n_total = 0
             for i in range(num_step):
                 global_states, local_obss, actions, done_idxs, rewards, time_steps, next_global_states, next_local_obss, \
-                next_available_actions = load_data(int(episodes/num_step), bias,
+                next_available_actions = load_data(int(train_episodes/num_step), bias,
                                                    data_dir, n_agents=num_agents)
                 offline_dataset = SequentialDataset(1, global_states, local_obss, actions, done_idxs, rewards,
                                                     time_steps,
                                                     next_global_states, next_local_obss, next_available_actions)
-                run_epoch(offline_dataset)
-                bias += int(episodes/num_step)
+                run_epoch('train', offline_dataset)
+                bias += int(train_episodes/num_step)
             self.global_step += 1
+            accuracy = self.n_correct / self.n_total
+            logger.info(f"Training epoch {epoch + 1}: accuracy {accuracy:.5f}.")
+            self.writer.add_scalar("training accuracy", accuracy, offline_iter * config.max_epochs + epoch)
+
+            if test_episodes != 0:
+                self.n_correct = 0
+                self.n_total = 0
+                for i in range(num_step):
+                    global_states, local_obss, actions, done_idxs, rewards, time_steps, next_global_states, next_local_obss, \
+                    next_available_actions = load_data(int(train_episodes / num_step), bias,
+                                                       data_dir, n_agents=num_agents)
+                    offline_dataset = SequentialDataset(1, global_states, local_obss, actions, done_idxs, rewards,
+                                                        time_steps,
+                                                        next_global_states, next_local_obss, next_available_actions)
+                    run_epoch('test', offline_dataset)
+                    bias += int(test_episodes / num_step)
+                accuracy = self.n_correct / self.n_total
+                logger.info(f"Epoch {epoch + 1}: test accuracy {accuracy:.5f}.")
+                self.writer.add_scalar("testing accuracy", accuracy, offline_iter * config.max_epochs + epoch)
+
         self.raw_model = raw_model
+
+
