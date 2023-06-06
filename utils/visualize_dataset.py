@@ -3,6 +3,7 @@ import os
 import torch
 import h5py
 import numpy as np
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -38,7 +39,8 @@ def plot_reward_distribution(map_name='3m'):
     plt.savefig(f'/home/lhmeng/Datasetproj/on-policy/maps_reward_distribution/{map_name}.png', bbox_inches='tight')
     #plt.show()
 
-map_list = ['3m', '8m', '2s3z', '2s_vs_1sc', '3s_vs_4z', 'MMM', 'so_many_baneling', '3s_vs_3z', '2m_vs_1z', 'bane_vs_bane', '1c3s5z', '5m_vs_6m', '10m_vs_11m', '2c_vs_64zg', '8m_vs_9m', '3s_vs_5z']
+map_list = ['3m', '8m', '2s3z', '2s_vs_1sc', '3s_vs_4z', 'MMM', 'so_many_baneling', '3s_vs_3z', '2m_vs_1z',
+            'bane_vs_bane', '1c3s5z', '5m_vs_6m', '10m_vs_11m', '2c_vs_64zg', '8m_vs_9m', '3s_vs_5z']
 for map_name in map_list:
     plot_reward_distribution(map_name)
 

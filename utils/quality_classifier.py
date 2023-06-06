@@ -43,17 +43,17 @@ def classify_quality(map_name):
         episode_ids[quality] = []
         thread_ids[quality] = []
 
-    file_num = len(os.listdir(f"/data/bk/d4marl/raw_data/{map_name}/no_quality"))
+    file_num = len(os.listdir(f"/data/d4marl/raw_data/{map_name}/no_quality"))
     cnt = 0
 
     print("map name: {}, {} threads in total".format(map_name, file_num))
 
-    for file_path in os.listdir(f"/data/bk/d4marl/raw_data/{map_name}/no_quality"):
+    for file_path in os.listdir(f"/data/d4marl/raw_data/{map_name}/no_quality"):
         cnt += 1
         if cnt % 1000 == 0:
             print("{} threads loaded, current file: {}".format(cnt, file_path))
 
-        raw_file = torch.load(os.path.join(f"/data/bk/d4marl/raw_data/{map_name}/no_quality", file_path))
+        raw_file = torch.load(os.path.join(f"/data/d4marl/raw_data/{map_name}/no_quality", file_path))
 
         thread_obs = []     #(thread_num, agent_num, step_length, obs_dim)
         thread_share_obs = []
@@ -246,7 +246,7 @@ def save_chunk(share_obs, obs, actions, rewards, dones, available_actions, episo
         '''
 
 
-    with h5py.File(f"/data/bk/d4marl/hdf5_files/{map_name}/{quality}"
+    with h5py.File(f"/data/d4marl/hdf5_files/{map_name}/{quality}"
                    f"/{map_name}_{quality}_chunk{chunk_num}.hdf5", 'w') as f:
         f.create_dataset("observations", data=np_obs, chunks=True)
         f.create_dataset("share_observations", data=np_share_obs, chunks=True)
@@ -260,4 +260,6 @@ def save_chunk(share_obs, obs, actions, rewards, dones, available_actions, episo
         f.create_dataset("step_cuts", data=np.array(step_cuts), chunks=True)
 
 if __name__=="__main__":
-    classify_quality('1c3s5z')
+    map_list = ['3s_vs_4z']
+    for map_name in map_list:
+        classify_quality(map_name)

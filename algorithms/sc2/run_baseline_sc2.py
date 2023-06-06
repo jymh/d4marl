@@ -1,6 +1,8 @@
 import logging
 import argparse
 
+import requests
+import os
 import numpy as np
 
 import torch
@@ -27,6 +29,8 @@ parser.add_argument('--model_type', type=str, default='reward_conditioned')
 # parser.add_argument('--gamma', type=float, default=0.99)
 
 parser.add_argument('--offline_data_dir', type=str, default='../../offline_data/3m/')
+parser.add_argument('--download_dataset', type=bool, default=False)
+parser.add_argument('--offline_data_quality', type=str, default='good')
 parser.add_argument('--offline_episodes', type=int, default=1000)
 parser.add_argument('--offline_test_episodes', type=int, default=0)
 parser.add_argument('--offline_episode_bias', type=int, default=0)
@@ -72,6 +76,19 @@ from envs.env import Env
 
 if __name__ == '__main__':
     set_seed(args.seed)
+
+    if args.download_dataset:
+        map_name = args.map_name
+        quality = args.offline_data_quality
+        download_dir = os.path.join(args.offline_data_dir, args.map_name)
+        url = f"https://d4marl.oss-cn-beijing.aliyuncs.com/demo_files/{map_name}/{quality}/{quality}.hdf5"
+        if not os.path.exists(os.path.join(download_dir, quality)):
+            os.makedirs(os.path.join(download_dir, quality))
+        file_name = url.split('/')[-1]
+        print(f"downloading dataset from {url}")
+        with open(os.path.join(download_dir, quality, file_name), 'wb') as f:
+            f.write(requests.get(url).content)
+            print(f"download from {url} to {os.path.join(download_dir, quality, file_name)}")
 
     logging.basicConfig(filename=args.offline_log_filename, filemode='a',
                         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",

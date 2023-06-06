@@ -2,3 +2,10 @@ map_reward_distribution.zip
 map_reward_distribution/
 todo.txt
 README.md
+dataset/
+plt_mujoco.py
+plt_observability.py
+plt_reward.py
+utils/download_dataset.py
+graphs/
+.idea/

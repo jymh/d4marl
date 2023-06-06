@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="lhmeng@172.18.30.162:22 (2)" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" autoUpload="Always" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="lhmeng@172.18.30.162:22">
+      <paths name="xingdp@172.18.30.164:22 (1)">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/lhmeng/Datasetproj/d4marl" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/xingdp/lhmeng/Datasetproj/d4marl" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
-      <paths name="lhmeng@172.18.30.162:22 (2)">
+      <paths name="xingdp@172.18.30.164:22 (2)">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/lhmeng/Datasetproj/d4marl" local="$PROJECT_DIR$" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="xingdp@172.18.30.164:22 (3)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

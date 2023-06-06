@@ -1,4 +1,4 @@
-
+import requests
 import argparse
 import torch
 import os
@@ -30,6 +30,7 @@ parser.add_argument('--offline_episode_num', type=int, nargs="+", help="list of 
 parser.add_argument('--offline_test_episodes', type=int, default=0, help="list of episode numbers used for testing while offline training")
 parser.add_argument('--offline_data_quality', type=str, nargs="+", default=['good'], help="quality of data")
 parser.add_argument('--offline_data_dir', type=str, default='../../offline_data/')
+parser.add_argument('--download_dataset', type=bool, default=False)
 
 parser.add_argument('--offline_epochs', type=int, default=10)
 parser.add_argument('--offline_mini_batch_size', type=int, default=128)
@@ -46,9 +47,9 @@ parser.add_argument('--online_eval_interval', type=int, default=1)
 parser.add_argument('--online_train_critic', type=bool, default=True)
 parser.add_argument('--online_pre_train_model_load', type=bool, default=True)
 parser.add_argument('--online_pre_train_model_id', type=int, default=9)
-global_obs_dim = 259
-local_obs_dim = 209
-action_dim = 14
+global_obs_dim = 219
+local_obs_dim = 179
+action_dim = 20
 
 # args = parser.parse_args(args, parser)
 args = parser.parse_args()
@@ -89,6 +90,20 @@ if torch.cuda.is_available():
 buffer = MadtReplayBuffer(block_size, global_obs_dim, local_obs_dim, action_dim)
 rollout_worker = RolloutWorker(model, critic_model, buffer, global_obs_dim, local_obs_dim, action_dim)
 
+
+if args.download_dataset:
+    for map_name in args.offline_map_lists:
+        download_dir = os.path.join(args.offline_data_dir, map_name)
+        for quality in args.offline_data_quality:
+            url = f"https://d4marl.oss-cn-beijing.aliyuncs.com/demo_files/{map_name}/{quality}/{quality}.hdf5"
+            if not os.path.exists(os.path.join(download_dir, quality)):
+                os.makedirs(os.path.join(download_dir, quality))
+            file_name = url.split('/')[-1]
+            print(f"downloading dataset from {url}")
+            with open(os.path.join(download_dir, quality, file_name), 'wb') as f:
+                f.write(requests.get(url).content)
+                print(f"download from {url} to {os.path.join(download_dir, quality, file_name)}")
+
 used_data_dir = {}
 '''
 for map_name in args.offline_map_lists:
@@ -102,7 +117,7 @@ for map_name in args.offline_map_lists:
     used_data_dir[map_name] = []
     source_dir = os.path.join(args.offline_data_dir, map_name)
     map_names += map_name
-    if map_names != args.offline_map_lists[-1]:
+    if map_name != args.offline_map_lists[-1]:
         map_names += '_'
     for quality in args.offline_data_quality:
         qualities += quality
