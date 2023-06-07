@@ -1,0 +1,437 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Implicit Constrained Q-learning for Offline Multi-agent Reinforcement Learning &#8212; D4MARL  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Multi-agent version of Constrain-based Offline RL methods" href="maconstrain.html" />
+    <link rel="prev" title="Usage Video" href="../start/usage.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="implicit-constrained-q-learning-for-offline-multi-agent-reinforcement-learning">
+<h1>Implicit Constrained Q-learning for Offline  Multi-agent Reinforcement Learning<a class="headerlink" href="#implicit-constrained-q-learning-for-offline-multi-agent-reinforcement-learning" title="Permalink to this heading">¶</a></h1>
+<section id="quick-facts">
+<h2>Quick Facts<a class="headerlink" href="#quick-facts" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="cpo-theorem">
+<h2>CPO Theorem<a class="headerlink" href="#cpo-theorem" title="Permalink to this heading">¶</a></h2>
+<section id="background">
+<h3>Background<a class="headerlink" href="#background" title="Permalink to this heading">¶</a></h3>
+<p><strong>Constrained policy optimization (CPO)</strong> is a policy search algorithm for safe
+reinforcement learning that guarantees near-constraint satisfaction at each
+iteration. CPO builds upon the ideas of TRPO( <span class="xref std std-doc">../baserl/trpo</span>)
+to construct surrogate functions that approximate the objectives and
+constraints, and it is easy to estimate using samples from the current policy.
+CPO provides tighter bounds for policy search using trust regions, making it
+the first general-purpose policy search algorithm for safe RL.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>CPO can train neural network policies for high-dimensional control while ensuring that they behave within specified constraints throughout training.</p>
+</div>
+<p>CPO aims to provide an approach for policy search in continuous CMDP. It uses
+the result from TRPO and
+NPG to derive a policy improvement step that guarantees both an increase in
+reward and satisfaction of constraints. Although CPO is slightly inferior in
+performance, it offers a solid theoretical foundation for solving constrained
+optimization problems in safe RL.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>CPO is very complex in terms of implementation, but OmniSafe provides a highly readable code implementation to help you get up to speed quickly.</p>
+</div>
+</section>
+<hr class="docutils" />
+<section id="optimization-objective">
+<h3>Optimization Objective<a class="headerlink" href="#optimization-objective" title="Permalink to this heading">¶</a></h3>
+<p>In the previous chapters, we introduced that TRPO solves the following
+optimization problems:</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-1">
+<span class="eqno">(1)<a class="headerlink" href="#equation-cpo-eq-1" title="Permalink to this equation">¶</a></span>\[\begin{split}&amp;\pi_{k+1}=\arg\max_{\pi \in \Pi_{\boldsymbol{\theta}}}J^R(\pi)\\
+\text{s.t.}\quad &amp;D(\pi,\pi_k)\le\delta\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Pi_{\boldsymbol{\theta}} \subseteq \Pi\)</span> denotes the set of
+parametrized policies with parameters <span class="math notranslate nohighlight">\(\boldsymbol{\theta}\)</span>, and
+<span class="math notranslate nohighlight">\(D\)</span> is some distance measure.</p>
+<p>In local policy search, we additionally require policy iterates to be feasible
+for the CMDP. So instead of optimizing over <span class="math notranslate nohighlight">\(\Pi_{\boldsymbol{\theta}}\)</span>,
+CPO optimizes over <span class="math notranslate nohighlight">\(\Pi_{\boldsymbol{\theta}} \cap \Pi_{C}\)</span>.</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-2">
+<span class="eqno">(2)<a class="headerlink" href="#equation-cpo-eq-2" title="Permalink to this equation">¶</a></span>\[\begin{split}\pi_{k+1} &amp;= \arg\max_{\pi \in \Pi_{\boldsymbol{\theta}}}J^R(\pi)\\
+\text{s.t.} \quad  D(\pi,\pi_k) &amp;\le\delta\\
+J^{C_i}(\pi) &amp;\le d_i\quad i=1,...m\end{split}\]</div>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>This update is difficult to implement because it requires evaluating the constraint functions to determine whether a proposed policy <span class="math notranslate nohighlight">\(\pi\)</span> is feasible.</p>
+</div>
+</section>
+<hr class="docutils" />
+<section id="policy-performance-bounds">
+<h3>Policy Performance Bounds<a class="headerlink" href="#policy-performance-bounds" title="Permalink to this heading">¶</a></h3>
+<p>CPO presents the theoretical foundation for its approach, a new bound on the
+difference in returns between two arbitrary policies.</p>
+<p>The following <a href="#id1"><span class="problematic" id="id2">:bdg-info-line:`Theorem 1`</span></a> connects the difference in returns (or
+constraint costs) between two arbitrary policies to an average divergence
+between them.</p>
+<p id="theorem-1">By picking <span class="math notranslate nohighlight">\(f=V^{R}_\pi\)</span> or <span class="math notranslate nohighlight">\(f=V^{C}_\pi\)</span>,
+we obtain a <a href="#id3"><span class="problematic" id="id4">:bdg-info-line:`Corollary 1`</span></a>,
+<a href="#id5"><span class="problematic" id="id6">:bdg-info-line:`Corollary 2`</span></a>, <a href="#id7"><span class="problematic" id="id8">:bdg-info-line:`Corollary 3`</span></a> below:</p>
+</section>
+<span id="corollary-1"></span><hr class="docutils" id="corollary-2" />
+<section id="trust-region-methods">
+<h3>Trust Region Methods<a class="headerlink" href="#trust-region-methods" title="Permalink to this heading">¶</a></h3>
+<p>For parameterized stationary policy, trust region algorithms for reinforcement
+learning have policy updates of the following form:</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-9">
+<span id="cpo-eq-11"></span><span class="eqno">(3)<a class="headerlink" href="#equation-cpo-eq-9" title="Permalink to this equation">¶</a></span>\[\begin{split}&amp;\boldsymbol{\theta}_{k+1}=\arg\max_{\pi \in \Pi_{\boldsymbol{\theta}}} \underset{\substack{s \sim d_{\pi_k}\\a \sim \pi}}{\mathbb{E}}[A^R_{\boldsymbol{\theta}_k}(s, a)]\\
+\text{s.t.}\quad &amp;\bar{D}_{K L}\left(\pi \| \pi_k\right) \le \delta\end{split}\]</div>
+<p>where
+<span class="math notranslate nohighlight">\(\bar{D}_{K L}(\pi \| \pi_k)=\underset{s \sim \pi_k}{\mathbb{E}}[D_{K L}(\pi \| \pi_k)[s]]\)</span>
+and <span class="math notranslate nohighlight">\(\delta \ge 0\)</span> is the step size.
+The set <span class="math notranslate nohighlight">\(\left\{\pi_{\boldsymbol{\theta}} \in \Pi_{\boldsymbol{\theta}}: \bar{D}_{K L}\left(\pi \| \pi'\right) \leq \delta\right\}\)</span> is called trust
+region.
+The success motivation for this update is that it approximates optimizing the
+lower bound on policy performance given in <a href="#id9"><span class="problematic" id="id10">:bdg-info-line:`Corollary 1`</span></a>, which
+would guarantee monotonic performance improvements.</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-10">
+<span id="cpo-eq-12"></span><span class="eqno">(4)<a class="headerlink" href="#equation-cpo-eq-10" title="Permalink to this equation">¶</a></span>\[\begin{split}\pi_{k+1}&amp;=\arg \max _{\pi \in \Pi_{\boldsymbol{\theta}}} \underset{\substack{s \sim d_{\pi_k}\\a \sim \pi}}{\mathbb{E}}[A^R_{\pi_k}(s, a)]\\
+\text{s.t.} \quad J^{C_i}\left(\pi_k\right) &amp;\leq d_i-\frac{1}{1-\gamma} \underset{\substack{s \sim d_{\pi_k}\\a \sim \pi}}{\mathbb{E}}\left[A^{C_i}_{\pi_k}(s, a)\right] \quad \forall i  \\
+\bar{D}_{K L}\left(\pi \| \pi_k\right) &amp;\leq \delta\end{split}\]</div>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>In a word, CPO uses a trust region instead of penalties on policy divergence to enable larger step size.</p>
+</div>
+</section>
+<hr class="docutils" />
+<section id="worst-case-performance-of-cpo-update">
+<h3>Worst-case Performance of CPO Update<a class="headerlink" href="#worst-case-performance-of-cpo-update" title="Permalink to this heading">¶</a></h3>
+<p>Here we will introduce the propositions proposed by the CPO, one describes the
+worst-case performance degradation guarantee that depends on <span class="math notranslate nohighlight">\(\delta\)</span>,
+and the other discusses the worst-case constraint violation in the CPO update.</p>
+</section>
+<hr class="docutils" id="proposition-2" />
+<section id="summary">
+<h3>Summary<a class="headerlink" href="#summary" title="Permalink to this heading">¶</a></h3>
+<p>We mainly introduced the essential inequalities in CPO.
+Based on those inequalities, CPO presents optimization problems that ultimately
+need to be solved and propose two proposition about the worst case in the CPO
+update.
+Next section, we will discuss how to solve this problem practically.
+You may be confused when you first read these theoretical
+derivation processes, and we have given detailed proof of the above formulas in
+the appendix, which we believe you can understand by reading them a few times.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="practical-implementation">
+<h2>Practical Implementation<a class="headerlink" href="#practical-implementation" title="Permalink to this heading">¶</a></h2>
+<hr class="docutils" />
+<section id="approximately-solving-the-cpo-update">
+<span id="id11"></span><h3>Approximately Solving the CPO Update<a class="headerlink" href="#approximately-solving-the-cpo-update" title="Permalink to this heading">¶</a></h3>
+<p>For policies with high-dimensional parameter spaces like neural networks, <a class="reference internal" href="#equation-cpo-eq-10">(4)</a> can be impractical to solve directly because of the computational cost.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>However, for small step sizes <span class="math notranslate nohighlight">\(\delta\)</span>, the objective and cost constraints are well-approximated by linearizing around <span class="math notranslate nohighlight">\(\pi_k\)</span>, and the KL-Divergence constraint is well-approximated by second-order expansion.</p>
+</div>
+<p>Denoting the gradient of the objective as <span class="math notranslate nohighlight">\(g\)</span>, the gradient of constraint <span class="math notranslate nohighlight">\(i\)</span> as <span class="math notranslate nohighlight">\(b_i\)</span>, the Hessian of the <span class="math notranslate nohighlight">\(KL\)</span> divergence as <span class="math notranslate nohighlight">\(H\)</span>, and defining <span class="math notranslate nohighlight">\(c_i=J^{C_i}\left(\pi_k\right)-d_i\)</span>, the approximation to <a class="reference internal" href="#equation-cpo-eq-10">(4)</a> is:</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-13">
+<span id="cpo-eq-13"></span><span class="eqno">(5)<a class="headerlink" href="#equation-cpo-eq-13" title="Permalink to this equation">¶</a></span>\[\begin{split}&amp;\boldsymbol{\theta}_{k+1}=\arg \max _{\boldsymbol{\theta}} g^T\left(\boldsymbol{\theta}-\boldsymbol{\theta}_k\right)\\
+\text{s.t.}\quad  &amp;c_i+b_i^T\left(\boldsymbol{\theta}-\boldsymbol{\theta}_k\right) \leq 0 ~~~ i=1, \ldots m \\
+&amp;\frac{1}{2}\left(\boldsymbol{\theta}-\boldsymbol{\theta}_k\right)^T H\left(\boldsymbol{\theta}-\boldsymbol{\theta}_k\right) \leq \delta\end{split}\]</div>
+<p>With <span class="math notranslate nohighlight">\(B=\left[b_1, \ldots, b_m\right]\)</span> and <span class="math notranslate nohighlight">\(c=\left[c_1, \ldots, c_m\right]^T\)</span>, a dual to <a class="reference internal" href="#equation-cpo-eq-13">(5)</a> can be express as:</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-14">
+<span class="eqno">(6)<a class="headerlink" href="#equation-cpo-eq-14" title="Permalink to this equation">¶</a></span>\[\max_{\lambda \geq 0, \nu \geq 0} \frac{-1}{2 \lambda}\left(g^T H^{-1} g-2 r^T v+v^T S v\right)+v^T c-\frac{\lambda \delta}{2}\]</div>
+<p>where <span class="math notranslate nohighlight">\(r=g^T H^{-1} B, S=B^T H^{-1} B\)</span>. If <span class="math notranslate nohighlight">\(\lambda^*, v^*\)</span> are a solution to the dual, the solution to the primal is</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-15">
+<span id="cpo-eq-14"></span><span class="eqno">(7)<a class="headerlink" href="#equation-cpo-eq-15" title="Permalink to this equation">¶</a></span>\[{\boldsymbol{\theta}}^*={\boldsymbol{\theta}}_k+\frac{1}{\lambda^*} H^{-1}\left(g-B v^*\right)\]</div>
+<p>In a word, CPO solves the dual for <span class="math notranslate nohighlight">\(\lambda^*, \nu^*\)</span> and uses it to
+propose the policy update <a class="reference internal" href="#equation-cpo-eq-15">(7)</a>, thus solving <a class="reference internal" href="#equation-cpo-eq-10">(4)</a> in a
+particular way.
+In the experiment,
+CPO also uses two tricks to promise the update’s performance.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Because of the approximation error, the proposed update may not satisfy the constraints in <a class="reference internal" href="#equation-cpo-eq-10">(4)</a>; A backtracking line search is used to ensure surrogate constraint satisfaction.</p>
+</div>
+<p>For high-dimensional policies, it is impractically expensive to invert the
+Fisher information matrix.
+This poses a challenge for computing <span class="math notranslate nohighlight">\(H^{-1} \mathrm{~g}\)</span> and
+<span class="math notranslate nohighlight">\(H^{-1} b\)</span>, which appears in the dual.
+Like TRPO, CPO computes them approximately using the conjugate gradient method.</p>
+<hr class="docutils" />
+</section>
+<section id="feasibility">
+<span id="id12"></span><h3>Feasibility<a class="headerlink" href="#feasibility" title="Permalink to this heading">¶</a></h3>
+<p>CPO may occasionally produce an infeasible iterate <span class="math notranslate nohighlight">\(\pi_k\)</span> due to
+approximation errors. To handle such cases, CPO proposes an update that purely
+decreases the constraint value.</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-16">
+<span class="eqno">(8)<a class="headerlink" href="#equation-cpo-eq-16" title="Permalink to this equation">¶</a></span>\[\boldsymbol{\theta}^*=\boldsymbol{\theta}_k-\sqrt{\frac{2 \delta}{b^T H^{-1} b}} H^{-1} b\]</div>
+<p>This is followed by a line search, similar to
+before. This approach is principled because it uses the limiting search
+direction as the intersection of the trust region and the constraint region
+shrinks to zero.</p>
+<hr class="docutils" />
+</section>
+<section id="tightening-constraints-via-cost-shaping">
+<span id="id13"></span><h3>Tightening Constraints via Cost Shaping<a class="headerlink" href="#tightening-constraints-via-cost-shaping" title="Permalink to this heading">¶</a></h3>
+<p>To build a factor of safety into the algorithm minimizing the chance of
+constraint violations, CPO chooses to constrain upper bounds on the original
+constraints, <span class="math notranslate nohighlight">\(C_i^{+}\)</span>, instead of the original constraints themselves.
+CPO does this by cost shaping:</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-17">
+<span class="eqno">(9)<a class="headerlink" href="#equation-cpo-eq-17" title="Permalink to this equation">¶</a></span>\[C_i^{+}\left(s, a, s^{\prime}\right)=C_i\left(s, a, s^{\prime}\right)+\triangle_i\left(s, a, s^{\prime}\right)\]</div>
+<p>where
+<span class="math notranslate nohighlight">\(\delta_i: \mathcal{S} \times \mathcal{A} \times \mathcal{S} \rightarrow R_{+}\)</span>
+correlates in
+some useful way with <span class="math notranslate nohighlight">\(C_i\)</span>.
+Because CPO has only one constraint, it partitions states into safe and unsafe
+states, and the agent suffers a safety cost of 1 for being in an unsafe state.</p>
+<p>CPO chooses <span class="math notranslate nohighlight">\(\triangle\)</span> to be the probability of entering an unsafe state
+within a fixed time horizon, according to a learned model that is updated at
+each iteration.
+This choice confers the additional benefit of smoothing out sparse constraints.</p>
+<hr class="docutils" />
+</section>
+<section id="code-with-omnisafe">
+<span id="id14"></span><h3>Code with OmniSafe<a class="headerlink" href="#code-with-omnisafe" title="Permalink to this heading">¶</a></h3>
+<section id="quick-start">
+<h4>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this heading">¶</a></h4>
+<hr class="docutils" />
+<p>Here is the documentation of CPO in PyTorch version.</p>
+</section>
+<section id="architecture-of-functions">
+<h4>Architecture of functions<a class="headerlink" href="#architecture-of-functions" title="Permalink to this heading">¶</a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CPO.learn()</span></code></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPO._env.rollout()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPO._update()</span></code></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPO._buf.get()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPO._update_actor()</span></code></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPO._fvp()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">conjugate_gradients()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPO._cpo_search_step()</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPO._update_cost_critic()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPO._update_reward_critic()</span></code></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="documentation-of-algorithm-specific-functions">
+<h4>Documentation of algorithm specific functions<a class="headerlink" href="#documentation-of-algorithm-specific-functions" title="Permalink to this heading">¶</a></h4>
+</section>
+<hr class="docutils" />
+<section id="configs">
+<h4>Configs<a class="headerlink" href="#configs" title="Permalink to this heading">¶</a></h4>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://arxiv.org/abs/1705.10528">Constrained Policy Optimization</a></p></li>
+<li><p><a class="reference external" href="https://proceedings.neurips.cc/paper/2001/file/4b86abe48d358ecf194c56c69108433e-Paper.pdf">A Natural Policy Gradient</a></p></li>
+<li><p><a class="reference external" href="https://arxiv.org/abs/1502.05477">Trust Region Policy Optimization</a></p></li>
+<li><p><a class="reference external" href="https://www.semanticscholar.org/paper/Constrained-Markov-Decision-Processes-Altman/3cc2608fd77b9b65f5bd378e8797b2ab1b8acde7">Constrained Markov Decision Processes</a></p></li>
+</ul>
+</section>
+<section id="cards-clickable">
+<span id="appendix"></span><span id="id15"></span><h2>Appendix<a class="headerlink" href="#cards-clickable" title="Permalink to this heading">¶</a></h2>
+<p><a href="#id16"><span class="problematic" id="id17">:bdg-ref-info-line:`Click here to jump to CPO Theorem&lt;Theorem 1&gt;`</span></a>  <a href="#id18"><span class="problematic" id="id19">:bdg-ref-success-line:`Click here to jump to Code with OmniSafe&lt;Code_with_OmniSafe&gt;`</span></a></p>
+<section id="proof-of-theorem-1-difference-between-two-arbitrary-policies">
+<h3>Proof of theorem 1 (Difference between two arbitrary policies)<a class="headerlink" href="#proof-of-theorem-1-difference-between-two-arbitrary-policies" title="Permalink to this heading">¶</a></h3>
+<p>Our analysis will begin with the discounted future state distribution,
+<span class="math notranslate nohighlight">\(d_\pi\)</span>, which is defined as:</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-18">
+<span class="eqno">(10)<a class="headerlink" href="#equation-cpo-eq-18" title="Permalink to this equation">¶</a></span>\[d_\pi(s)=(1-\gamma) \sum_{t=0}^{\infty} \gamma^t P\left(s_t=s|\pi\right)\]</div>
+<p>Let <span class="math notranslate nohighlight">\(p_\pi^t \in \mathbb{R}^{|\mathcal{S}|}\)</span>
+denote the vector with components
+<span class="math notranslate nohighlight">\(p_\pi^t(s)=P\left(s_t=s \mid \pi\right)\)</span>, and let
+<span class="math notranslate nohighlight">\(P_\pi \in \mathbb{R}^{|\mathcal{S}| \times|\mathcal{S}|}\)</span>
+denotes the transition
+matrix with components
+<span class="math notranslate nohighlight">\(P_\pi\left(s^{\prime} \mid s\right)=\int d a P\left(s^{\prime} \mid s, a\right) \pi(a \mid s)\)</span>,
+which shown as below:</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-19">
+<span class="eqno">(11)<a class="headerlink" href="#equation-cpo-eq-19" title="Permalink to this equation">¶</a></span>\[\begin{split}&amp;\left[\begin{array}{c}
+p_\pi^t\left(s_1\right) \\
+p_\pi^t\left(s_2\right) \\
+\vdots\nonumber \\
+p_\pi^t\left(s_n\right)
+\end{array}\right]
+=\left[\begin{array}{cccc}
+P_\pi\left(s_1 \mid s_1\right) &amp; P_\pi\left(s_1 \mid s_2\right) &amp; \cdots &amp; P_\pi\left(s_1 \mid s_n\right) \\
+P_\pi\left(s_2 \mid s_1\right) &amp; P_\pi\left(s_2 \mid s_2\right) &amp; \cdots &amp; P_\pi\left(s_2 \mid s_n\right) \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+P_\pi\left(s_n \mid s_1\right) &amp; P_\pi\left(s_n \mid s_2\right) &amp; \cdots &amp; P_\pi\left(s_n \mid s_n\right)
+\end{array}\right]\left[\begin{array}{c}
+p_\pi^{t-1}\left(s_1\right) \\
+p_\pi^{t-1}\left(s_2\right) \\
+\vdots \\
+p_\pi^{t-1}\left(s_n\right)
+\end{array}\right]\end{split}\]</div>
+<p>Then <span class="math notranslate nohighlight">\(p_\pi^t=P_\pi p_\pi^{t-1}=P_\pi^2 p_\pi^{t-2}=\ldots=P_\pi^t \mu\)</span>,
+where <span class="math notranslate nohighlight">\(\mu\)</span> represents the state distribution of the system at the moment.
+That is, the initial state distribution, then <span class="math notranslate nohighlight">\(d_\pi\)</span> can then be
+rewritten as:</p>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-20">
+<span class="eqno">(12)<a class="headerlink" href="#equation-cpo-eq-20" title="Permalink to this equation">¶</a></span>\[\begin{split}d_\pi&amp;=\left[\begin{array}{c}
+d_\pi\left(s_1\right) \\
+d_\pi\left(s_2\right) \\
+\vdots \\
+d_\pi\left(s_n\right)
+\end{array}\right]
+=(1-\gamma)\left[\begin{array}{c}
+\gamma^0 p_\pi^0\left(s_1\right)+\gamma^1 p_\pi^1\left(s_1\right)+\gamma^2 p_\pi^2\left(s_1\right)+\ldots \\
+\gamma^0 p_\pi^0\left(s_2\right)+\gamma^1 p_\pi^1\left(s_2\right)+\gamma^2 p_\pi^2\left(s_2\right)+\ldots \\
+\vdots \\
+\gamma^0 p_\pi^0\left(s_3\right)+\gamma^1 p_\pi^1\left(s_3\right)+\gamma^2 p_\pi^2\left(s_3\right)+\ldots
+\end{array}\right]\end{split}\]</div>
+<div class="math notranslate nohighlight" id="equation-cpo-eq-21">
+<span id="cpo-eq-17"></span><span class="eqno">(13)<a class="headerlink" href="#equation-cpo-eq-21" title="Permalink to this equation">¶</a></span>\[d_\pi=(1-\gamma) \sum_{t=0}^{\infty} \gamma^t p_\pi^t=(1-\gamma)\left(1-\gamma P_\pi\right)^{-1} \mu\]</div>
+<p>Begin with the bounds from <a href="#id20"><span class="problematic" id="id21">:bdg-info-line:`Lemma 2`</span></a> and bound the divergence by
+<a href="#id22"><span class="problematic" id="id23">:bdg-info-line:`Lemma 3`</span></a>, <a href="#id24"><span class="problematic" id="id25">:bdg-info-line:`Theorem 1`</span></a> can be finally proved.</p>
+</section>
+<hr class="docutils" id="cpo-eq-18" />
+<section id="proof-of-analytical-solution-to-lqclp">
+<h3>Proof of Analytical Solution to LQCLP<a class="headerlink" href="#proof-of-analytical-solution-to-lqclp" title="Permalink to this heading">¶</a></h3>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">D4MARL</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">get started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../start/usage.html">Usage Video</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">offline marl algorithms</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Implicit Constrained Q-learning for Offline  Multi-agent Reinforcement Learning</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#quick-facts">Quick Facts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cpo-theorem">CPO Theorem</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optimization-objective">Optimization Objective</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#policy-performance-bounds">Policy Performance Bounds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#trust-region-methods">Trust Region Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#worst-case-performance-of-cpo-update">Worst-case Performance of CPO Update</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#summary">Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#practical-implementation">Practical Implementation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#approximately-solving-the-cpo-update">Approximately Solving the CPO Update</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#feasibility">Feasibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tightening-constraints-via-cost-shaping">Tightening Constraints via Cost Shaping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code-with-omnisafe">Code with OmniSafe</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cards-clickable">Appendix</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#proof-of-theorem-1-difference-between-two-arbitrary-policies">Proof of theorem 1 (Difference between two arbitrary policies)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proof-of-analytical-solution-to-lqclp">Proof of Analytical Solution to LQCLP</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="maconstrain.html">Multi-agent version of Constrain-based Offline RL methods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="madt.html">Offline Pre-trained Multi-agent Decision Transformer</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../start/usage.html" title="previous chapter">Usage Video</a></li>
+      <li>Next: <a href="maconstrain.html" title="next chapter">Multi-agent version of Constrain-based Offline RL methods</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, offline MARL team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="../_sources/offlinemarl/icq.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
