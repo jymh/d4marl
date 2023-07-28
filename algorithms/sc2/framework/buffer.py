@@ -2,6 +2,7 @@ import torch
 import copy
 import glob
 import h5py
+import random
 import numpy as np
 from torch.utils.data import Dataset
 from .utils import padding_obs, padding_ava, get_episode
@@ -125,10 +126,15 @@ class MadtStateActionReturnDataset(Dataset):
         return len(self.global_state)
 
     def stats(self):
-        print("max episode length: ", max(np.array(self.done_idxs[1:]) - np.array(self.done_idxs[:-1])))
-        print("min episode length: ", min(np.array(self.done_idxs[1:]) - np.array(self.done_idxs[:-1])))
-        print("max rtgs: ", max(self.rtgs))
-        print("aver episode rtgs: ", np.mean([self.rtgs[i] for i in self.done_idxs[:-1]]))
+        max_epi_len = max(np.array(self.done_idxs[1:]) - np.array(self.done_idxs[:-1]))
+        min_epi_len = min(np.array(self.done_idxs[1:]) - np.array(self.done_idxs[:-1]))
+        max_rtgs = max(self.rtgs)
+        aver_epi_rtgs = np.mean([self.rtgs[i] for i in self.done_idxs[:-1]])
+        print("max episode length: ", max_epi_len)
+        print("min episode length: ", min_epi_len)
+        print("max rtgs: ", max_rtgs)
+        print("aver episode rtgs: ", aver_epi_rtgs)
+        return max_epi_len, min_epi_len, max_rtgs, aver_epi_rtgs
 
     @property
     def max_rtgs(self):
@@ -263,6 +269,7 @@ class MadtReplayBuffer:
                     if self.size == self.buffer_size:
                         del self.data[0]
                     self.data.append(copy.deepcopy(self.episodes[n]))
+                    #print(self.data)
         if np.all(self.episode_dones):
             self.episodes = []
             self.episode_dones = []
@@ -281,6 +288,17 @@ class MadtReplayBuffer:
         for map_name in data_dir.keys():
             map_data_files = data_dir[map_name]
             accumulated_episodes = 0
+            total_episodes = 0
+            for j in range(len(map_data_files)):
+                path_file = map_data_files[j]
+
+                data_file = h5py.File(path_file, 'r')
+                episodes_in_file = len(list(data_file['step_cuts'])) - 1
+                total_episodes += episodes_in_file
+
+            if offline_episode_num[map_id] + offline_test_episodes > total_episodes:
+                raise ValueError("Required episodes larger than total {} episodes for map {}, please reduce offline "
+                      "episodes.".format(total_episodes, map_name))
             for j in range(len(map_data_files)):
                 path_file = map_data_files[j]
                 data_file = h5py.File(path_file, 'r')
@@ -290,6 +308,8 @@ class MadtReplayBuffer:
                 while(accumulated_episodes <= offline_episode_num[map_id] + offline_test_episodes):
                     share_obs, obs, actions, rewards, terminals, ava_actions = get_episode(cnt, 0, data_file)
 
+                    print("Original dimension: obs {}, share_obs {}, available_actions {}.".format(
+                        np.array(obs).shape[-1], np.array(share_obs).shape[-1], np.array(ava_actions).shape[-1]))
                     # padding obs
                     share_obs = padding_obs(share_obs, self.global_obs_dim)
                     obs = padding_obs(obs, self.local_obs_dim)
@@ -304,6 +324,53 @@ class MadtReplayBuffer:
                     cnt += 1
                     if cnt == episodes_in_file:
                         break
+            map_id += 1
+
+    def random_load_offline_data(self, data_dir, offline_episode_num, offline_test_episodes, max_epi_length=400):
+        map_id = 0
+        for map_name in data_dir.keys():
+            map_data_files = data_dir[map_name]
+            accumulated_episodes = 0
+            file_num = len(map_data_files)
+            episode_ifchosen = np.zeros((file_num, 100000))
+
+            total_episodes = 0
+            for j in range(len(map_data_files)):
+                path_file = map_data_files[j]
+
+                data_file = h5py.File(path_file, 'r')
+                episodes_in_file = len(list(data_file['step_cuts'])) - 1
+                total_episodes += episodes_in_file
+
+            if offline_episode_num[map_id] + offline_test_episodes > total_episodes:
+                raise ValueError("Required episodes larger than total {} episodes for map {}, please reduce offline "
+                      "episodes.".format(total_episodes, map_name))
+
+
+            while (accumulated_episodes <= offline_episode_num[map_id] + offline_test_episodes):
+                file_id = random.randint(0, file_num - 1)
+                with h5py.File(map_data_files[file_id]) as data_file:
+                    step_cuts = data_file["step_cuts"]
+                    episode_num = step_cuts.shape[0] - 1
+                    episode_id = random.randint(0, episode_num - 1)
+                    if not episode_ifchosen[file_id][episode_id]:
+                        share_obs, obs, actions, rewards, terminals, ava_actions = get_episode(episode_id, 0, data_file)
+
+                        # padding obs
+                        #print("Original dimension: obs {}, share_obs {}, available_actions {}.".format(
+                        #    np.array(obs).shape[-1], np.array(share_obs).shape[-1], np.array(ava_actions).shape[-1]))
+                        share_obs = padding_obs(share_obs, self.global_obs_dim)
+                        obs = padding_obs(obs, self.local_obs_dim)
+                        ava_actions = padding_ava(ava_actions, self.action_dim)
+
+                        episode = [share_obs, obs, actions, rewards, terminals, ava_actions]
+
+                        # self.data: (episode_num, attribute_num, agent_num, step_length, attribute_dim)
+                        self.data.append(episode)
+
+                        accumulated_episodes += 1
+                        episode_ifchosen[file_id][episode_id] = 1
+
             map_id += 1
 
     def sample(self):

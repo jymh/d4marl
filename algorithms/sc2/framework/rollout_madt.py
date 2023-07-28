@@ -28,6 +28,9 @@ class RolloutWorker:
         T_rewards, T_wins, steps, time_to_threshold, episode_dones = 0., 0., 0, 0, np.zeros(env.n_threads)
 
         obs, share_obs, available_actions = env.real_env.reset()
+
+        #print("Original dimension: obs {}, share_obs {}, available_actions {}.".format(
+        #    np.array(obs).shape[-1], np.array(share_obs).shape[-1], np.array(available_actions).shape[-1]))
         obs = padding_obs(obs, self.local_obs_dim)
         share_obs = padding_obs(share_obs, self.global_obs_dim)
         available_actions = padding_ava(available_actions, self.action_dim)

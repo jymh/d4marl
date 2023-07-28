@@ -44,6 +44,7 @@ def movable_actions(src_path, map_name, quality, steps=1000):
                         else:
                             movable_actions_num += 1
                 cur_size += episode_length
+                episode_ifchosen[file_id][episode_id] = 1
 
     total_actions_num = movable_actions_num + functional_actions_num
     print("map name: {}, quality: {}, movable actions(%): {:.2f}, functional actions(%): {:.2f}".format(

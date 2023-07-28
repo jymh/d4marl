@@ -34,7 +34,7 @@ def get_config():
 
     # replay buffer parameters
     parser.add_argument("--episode_length", type=int,
-                        default=100, help="Max length for any episode")
+                        default=400, help="Max length for any episode")
 
     # network parameters
     # parser.add_argument("--share_policy", action='store_false',

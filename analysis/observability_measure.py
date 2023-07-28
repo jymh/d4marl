@@ -93,6 +93,7 @@ def observability_measure(src_path, map_name, quality, steps=1000):
                         str_share_obs[agent].append(agent_step_shareobs)
                         str_obs[agent].append(agent_step_obs)
                 cur_size += episode_length
+                episode_ifchosen[file_id][episode_id] = 1
 
     mean_mi = 0
     for agent in range(agent_num):

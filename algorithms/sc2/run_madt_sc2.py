@@ -11,20 +11,24 @@ from framework.buffer import MadtReplayBuffer
 from framework.rollout_madt import RolloutWorker
 from datetime import datetime, timedelta
 from models.gpt_model import GPT, GPTConfig
+from envs.config import get_config
 # from models.mlp_model import GPT, GPTConfig
 
 # args = sys.argv[1:]
-parser = argparse.ArgumentParser()
-parser.add_argument('--seed', type=int, default=123)
+parser = get_config()
+#parser.add_argument('--seed', type=int, default=123)
 parser.add_argument('--context_length', type=int, default=1)
 parser.add_argument('--model_type', type=str, default='state_only')
-parser.add_argument('--eval_episodes', type=int, default=32)
+#parser.add_argument('--eval_episodes', type=int, default=32)
 parser.add_argument('--max_timestep', type=int, default=400)
 parser.add_argument('--log_dir', type=str, default='./madt_logs/')
 parser.add_argument('--save_log', type=bool, default=True)
 parser.add_argument('--exp_name', type=str, default='easy_trans')
 parser.add_argument('--pre_train_model_path', type=str, default='../../offline_model/')
 
+parser.add_argument('--share_obs_dim', type=int, default=500, help="dimension of share observation of each map")
+parser.add_argument('--obs_dim', type=int, default=300, help="dimension of observation of each map")
+parser.add_argument('--action_dim', type=int, default=30, help="dimension of action observation of each map")
 parser.add_argument('--offline_map_lists', type=str, nargs="+", help="list of map names")
 parser.add_argument('--offline_episode_num', type=int, nargs="+", help="list of episode numbers drawn from each map dataset")
 parser.add_argument('--offline_test_episodes', type=int, default=0, help="list of episode numbers used for testing while offline training")
@@ -45,16 +49,18 @@ parser.add_argument('--online_ppo_epochs', type=int, default=10)
 parser.add_argument('--online_lr', type=float, default=5e-4)
 parser.add_argument('--online_eval_interval', type=int, default=1)
 parser.add_argument('--online_train_critic', type=bool, default=True)
-parser.add_argument('--online_pre_train_model_load', type=bool, default=True)
+parser.add_argument('--online_pre_train_model_load', action="store_true", help="add parameter if you want to load pretrained model")
 parser.add_argument('--online_pre_train_model_id', type=int, default=9)
-global_obs_dim = 219
-local_obs_dim = 179
-action_dim = 20
+
 
 # args = parser.parse_args(args, parser)
 args = parser.parse_args()
 set_seed(args.seed)
 torch.set_num_threads(8)
+
+global_obs_dim = args.share_obs_dim
+local_obs_dim = args.obs_dim
+action_dim = args.action_dim
 
 cur_time = datetime.now() + timedelta(hours=0)
 args.log_dir += cur_time.strftime("[%m-%d]%H.%M.%S")
@@ -127,29 +133,29 @@ for map_name in args.offline_map_lists:
 buffer.load_offline_data(used_data_dir, args.offline_episode_num, args.offline_test_episodes,
                          max_epi_length=eval_env.max_timestep)
 offline_dataset = buffer.sample()
-offline_dataset.stats()
+max_epi_len, min_epi_len, max_rtgs, aver_epi_rtgs = offline_dataset.stats()
 
 offline_tconf = TrainerConfig(max_epochs=1, batch_size=args.offline_mini_batch_size, learning_rate=args.offline_lr,
-                              num_workers=0, mode="offline")
+                              num_workers=0, mode="offline", aver_epi_len=(max_epi_len+min_epi_len)/2)
 offline_trainer = Trainer(model, critic_model, offline_tconf)
 
 # target_rtgs = offline_dataset.max_rtgs
 target_rtgs = 20.
 print("offline target_rtgs: ", target_rtgs)
 for i in range(args.offline_epochs):
-    offline_actor_loss, offline_critic_loss, _, __, ___ = offline_trainer.train(offline_dataset,
+    offline_actor_loss, offline_critic_loss, _, __, ___ = offline_trainer.train(offline_dataset, i,
                                                                                 args.offline_test_episodes,
                                                                                 args.offline_train_critic)
     if args.save_log:
-        train_acc = offline_trainer.train_n_correct / offline_trainer.train_n_total
-        test_acc = offline_trainer.test_n_correct / offline_trainer.test_n_total
+        train_acc = offline_trainer.train_n_correct / (offline_trainer.train_n_total + 1)
+        test_acc = offline_trainer.test_n_correct / (offline_trainer.test_n_total + 1)
         writter.add_scalar(f"{map_names}/offline/training accuracy", train_acc, i)
         writter.add_scalar(f"{map_names}/offline/testing accuracy", test_acc, i)
         writter.add_scalar(f'{map_names}/offline/offline_actor_loss', offline_actor_loss, i)
         writter.add_scalar(f'{map_names}/offline/offline_critic_loss', offline_critic_loss, i)
     if i % args.offline_eval_interval == 0:
         aver_return, aver_win_rate, _ = rollout_worker.rollout(eval_env, target_rtgs, train=False)
-        print("offline epoch: %s, return: %s, eval_win_rate: %s" % (i, aver_return, aver_win_rate))
+        print("offline epoch: %s, return: %s, eval_win_rate: %s" % (i + 1, aver_return, aver_win_rate))
         if args.save_log:
             writter.add_scalar(f'{map_names}/aver_return', aver_return.item(), i)
             writter.add_scalar(f'{map_names}/aver_win_rate', aver_win_rate, i)
@@ -162,7 +168,7 @@ for i in range(args.offline_epochs):
             os.makedirs(critic_path)
         torch.save(model.state_dict(), actor_path + os.sep + str(i) + '.pkl')
         torch.save(critic_model.state_dict(), critic_path + os.sep + str(i) + '.pkl')
-
+del offline_dataset
 
 if args.online_epochs > 0 and args.online_pre_train_model_load:
     actor_path = args.pre_train_model_path + args.exp_name + '/' + map_names + '_' + qualities + '/actor/' + str(args.online_pre_train_model_id) + '.pkl'
@@ -183,8 +189,11 @@ for i in range(args.online_epochs):
     sample_return, _, steps = rollout_worker.rollout(online_train_env, target_rtgs, train=True)
     total_steps += steps
     online_dataset = buffer.sample()
-    online_actor_loss, online_critic_loss, entropy, ratio, confidence = online_trainer.train(online_dataset,
+    online_actor_loss, online_critic_loss, entropy, ratio, confidence = online_trainer.train(online_dataset, i,
                                                                                              train_critic=args.online_train_critic)
+    del online_dataset
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     if args.save_log:
         writter.add_scalar(f'{map_names}/online/online_actor_loss', online_actor_loss, total_steps)
         writter.add_scalar(f'{map_names}/online/online_critic_loss', online_critic_loss, total_steps)

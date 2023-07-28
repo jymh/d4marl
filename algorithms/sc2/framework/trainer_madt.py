@@ -50,7 +50,7 @@ class Trainer:
         self.test_n_correct = 0
         self.test_n_total = 0
 
-    def train(self, dataset, test_episodes=0, train_critic=True):
+    def train(self, dataset, outer_epoch, test_episodes=0, train_critic=True):
         model, critic_model, config = self.raw_model, self.raw_critic_model, self.config
         target_model = copy.deepcopy(model)
         target_model.train(False)
@@ -65,13 +65,14 @@ class Trainer:
             critic_model.train(True)
             if self.config.mode == "offline":
                 if test_episodes != 0:
-                    test_size = test_episodes
+                    aver_epi_len = self.config.aver_epi_len
+                    test_size = int(test_episodes * aver_epi_len)
                     train_size = len(dataset) - test_size
                     train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
                     loader = DataLoader(train_dataset, shuffle=True, pin_memory=True, drop_last=True,
                                         batch_size=config.batch_size,
                                         num_workers=config.num_workers)
-                    test_loader = DataLoader(test_dataset, shuffle=True, pin_memory=True, drop_last=True,
+                    test_loader = DataLoader(test_dataset, shuffle=True, pin_memory=True, drop_last=False,
                                         batch_size=config.batch_size,
                                         num_workers=config.num_workers)
                 else:
@@ -175,7 +176,10 @@ class Trainer:
                     self.critic_optimizer.step()
 
                 # report progress
-                pbar.set_description(f"epoch {epoch + 1} iter {it}: train loss {loss.item():.5f}.")
+                pbar.set_description(f"epoch {outer_epoch*config.max_epochs + epoch + 1} iter {it}: train loss {loss.item():.5f}.")
+
+            if self.config.mode == "online":
+                del loader
 
             if test_episodes != 0:
                 for it, (s, o, a, r, ava, v, rtg, ret, adv, t, pre_a, next_s, next_rtg, done) in tqdm(enumerate(test_loader), total=len(test_loader)):

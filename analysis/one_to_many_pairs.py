@@ -50,6 +50,7 @@ def get_state_action_pairs(src_path, map_name, quality, steps=1000):
                             if agent_step_action not in state_action_dict[agent_step_obs]:
                                 state_action_dict[agent_step_obs].append(agent_step_action)
                 cur_size += episode_length
+                episode_ifchosen[file_id][episode_id] = 1
     return state_action_dict
 
 def one_to_many_pairs_probablity(src_path, map_name, quality, steps=1000):
