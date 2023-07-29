@@ -10,3 +10,7 @@ plt_reward.py
 utils/download_dataset.py
 graphs/
 .idea/
+dataset_design.md
+get_map_episodenum.py
+main.py
+d4marl/
