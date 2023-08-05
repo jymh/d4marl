@@ -14,7 +14,7 @@ You can install D4MARL from source:
     $ pip install -r requirements.txt
 
 Data download Guide
-------------------
+-------------------
 
 You can download the whole dataset in advance by:
 
