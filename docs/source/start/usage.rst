@@ -31,17 +31,17 @@ Train Policy
     .. code-block:: bash
 
         if [ mode == "baseline" ]
-then
-    python -u run_baseline_sc2.py \ 
-        --offline_data_dir $path_to_data \
-        --download_dataset true \   # download demo dataset to start a quick training
-        --algorithm $baseline_algorithm \
-elif [ mode == "madt" ]
-then
-    python -u run_madt_sc2.py \
-        --offline_data_dir $path_to_data \
-        --download_dataset true \
-fi
+        then
+            python -u run_baseline_sc2.py \
+                --offline_data_dir $path_to_data \
+                --download_dataset true \   # download demo dataset to start a quick training
+                --algorithm $baseline_algorithm \
+        elif [ mode == "madt" ]
+        then
+            python -u run_madt_sc2.py \
+                --offline_data_dir $path_to_data \
+                --download_dataset true \
+        fi
 
 
 .. hint::
