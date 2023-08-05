@@ -20,6 +20,6 @@ You can download the whole dataset in advance by:
 
 .. code-block:: bash
 
-    $ wget 
+    $ wget
 
 Or you can also set the command in terminal `download_dataset` as **True**
