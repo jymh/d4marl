@@ -70,7 +70,7 @@ Customize Configuration
     We developed a visible training tool that integrates data preparation, hyperparameter configuration, model training, and evaluation of pre-trained models based on the Streamlit platform `Link to Write the Docs <https://www.writethedocs.org/>`_.
 
 
-==========
+===========
 Usage Guide
 ===========
 
@@ -141,5 +141,4 @@ Customize Configuration
     
 .. hint::
     We developed a visible training tool that integrates data preparation, hyperparameter configuration, model training, and evaluation of pre-trained models based on the Streamlit platform `Link to Write the Docs <https://www.writethedocs.org/>`_.
-
 
