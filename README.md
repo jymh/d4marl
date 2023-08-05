@@ -1,4 +1,4 @@
-# *D4MRL*: A Dataset and Benchmark for Diverse, Measurable Offline Multi-Agent Reinforcement Learning
+# *D4MARL*: A Dataset and Benchmark for Diverse, Measurable Offline Multi-Agent Reinforcement Learning
 
 
 
