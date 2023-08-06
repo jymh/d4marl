@@ -29,7 +29,7 @@ parser.add_argument('--model_type', type=str, default='reward_conditioned')
 # parser.add_argument('--gamma', type=float, default=0.99)
 
 parser.add_argument('--offline_data_dir', type=str, default='../../offline_data/3m/')
-parser.add_argument('--download_dataset', type=bool, default=False)
+parser.add_argument('--download_dataset', action="store_true", help="add parameter if you want to download demo datasets")
 parser.add_argument('--offline_data_quality', type=str, default='good')
 parser.add_argument('--offline_episodes', type=int, default=1000)
 parser.add_argument('--offline_test_episodes', type=int, default=0)

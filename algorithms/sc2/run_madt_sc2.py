@@ -34,7 +34,7 @@ parser.add_argument('--offline_episode_num', type=int, nargs="+", help="list of 
 parser.add_argument('--offline_test_episodes', type=int, default=0, help="list of episode numbers used for testing while offline training")
 parser.add_argument('--offline_data_quality', type=str, nargs="+", default=['good'], help="quality of data")
 parser.add_argument('--offline_data_dir', type=str, default='../../offline_data/')
-parser.add_argument('--download_dataset', type=bool, default=False)
+parser.add_argument('--download_dataset', action="store_true", help="add parameter if you want to download demo datasets")
 
 parser.add_argument('--offline_epochs', type=int, default=10)
 parser.add_argument('--offline_mini_batch_size', type=int, default=128)
