@@ -11,7 +11,7 @@ Quick Facts
     #. Here we provide :bdg-info-line:`Examples` of how to use D4MARL .
     #. You can train offline MARL policy by runnning :bdg-info-line:`python run_**` .
     #. You can customize the configuration of the algorithm by running on the visible platform :bdg-info-line:`streamlit run visualize.py` .
-    #. You can run a run to download and train policy by setting :bdg-info-line:`download_dataset` as True .
+    #. You can run a run to download and train policy by adding the parameter :bdg-info-line:`download_dataset` .
     #. You can run an evaluation by simply clicking the :bdg-info-line:`compare methods` .
     #. You can choose the training curve color of each method by clicking the :bdg-info-line:`color` .
   
@@ -34,13 +34,13 @@ Train Policy
         then
             python -u run_baseline_sc2.py \
                 --offline_data_dir $path_to_data \
-                --download_dataset true \   # download demo dataset to start a quick training
+                --download_dataset \   # download demo dataset to start a quick training
                 --algorithm $baseline_algorithm \
         elif [ mode == "madt" ]
         then
             python -u run_madt_sc2.py \
                 --offline_data_dir $path_to_data \
-                --download_dataset true \
+                --download_dataset \
         fi
 
 

@@ -33,7 +33,7 @@ Or you can also set the command in terminal **`download_dataset`** as **True**.
 - Here we provide `Examples` of how to use D4MARL.
 - You can train offline MARL policy by running `python run_**`.
 - You can run command for an easy-to-download dataset and train policy by setting `download_dataset` as **True**.
-- You can customize the configuration of the algorithm by running on the visible paltform `streamlit run visualize.py`.
+- You can customize the configuration of the algorithm by running on the visible platform `streamlit run visualize.py`.
 - You can run an evaluation process by simply clicking the `compare methods` on the platform.
 - You can choose the training curve colors of each method by clicking the `color` button.
 
@@ -45,13 +45,13 @@ if [ mode == "baseline" ]
 then
     python -u run_baseline_sc2.py \ 
         --offline_data_dir $path_to_data \
-        --download_dataset true \   # download demo dataset to start a quick training
+        --download_dataset \   # download demo dataset to start a quick training
         --algorithm $baseline_algorithm \
 elif [ mode == "madt" ]
 then
     python -u run_madt_sc2.py \
         --offline_data_dir $path_to_data \
-        --download_dataset true \
+        --download_dataset \
 fi
 ```
 
