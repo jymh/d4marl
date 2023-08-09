@@ -13,7 +13,7 @@ Introduction
 Welcome To D4MARL Tutorial
 ----------------------------
 
-.. image:: image/d4marl_logo.png
+.. image:: images/d4marl_logo.png
     :scale: 45%
 
 Welcome to `D4MARL` in Offline MARL! 
