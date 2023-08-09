@@ -16,13 +16,15 @@ pip install -r requirements.txt
 
 ### Data Download Guide
 
-You can download the whole dataset in advance by:
+You can download the demonstration dataset in advance by:
 
 ```bash
-wget https://
+wget https://d4marl.oss-cn-beijing.aliyuncs.com/demo_files/$map_name/$quality/$quality.hdf5
 ```
 
-Or you can also set the command in terminal **`download_dataset`** as **True**. 
+Here, replace replay **`$map_name`** and **`$quality`** with the map and quality you want.
+
+Or you can also set the parameter **`download_dataset`** in the running shell. 
 
 > In the following part, we will show how to pre-train the policy with default or customized configuration based on the downloaded dataset.
 
