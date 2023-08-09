@@ -30,7 +30,6 @@ extensions = [
     'sphinx_design',
     'sphinx_copybutton',
     'sphinx_autodoc_typehints',
-    'sphinxcontrib.spelling'
 ]
 
 
