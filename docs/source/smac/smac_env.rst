@@ -10,7 +10,7 @@ The scenarios cover a wide range of combat combinations and tactical challenges,
 Below is a detailed description of the scenarios, including the number of agents, enemies, time limits, races, and other specific parameters.
 
 .. list-table:: SMAC Maps
-   :widths: 15 10 10 10 10 10 10 10 10
+   :widths: 10 9 9 9 9 9 9 9
    :header-rows: 1
 
    * - Map Name
@@ -20,7 +20,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - Limit
      - Agent Race
      - Enemy Race
-     - Unit Type Bits
      - Map Type
    * - 2m_vs_1z
      - Easy
@@ -29,7 +28,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 150
      - T
      - P
-     - 0
      - marines
    * - 2s3z
      - Easy
@@ -38,7 +36,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 120
      - P
      - P
-     - 2
      - stalkers_and_zealots
    * - 2s_vs_1sc
      - Easy
@@ -47,7 +44,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 300
      - P
      - Z
-     - 0
      - stalkers
    * - 3m
      - Easy
@@ -56,7 +52,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 60
      - T
      - T
-     - 0
      - marines
    * - 3s_vs_3z
      - Easy
@@ -65,7 +60,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 150
      - P
      - P
-     - 0
      - stalkers
    * - 3s_vs_4z
      - Easy
@@ -74,7 +68,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 200
      - P
      - P
-     - 0
      - stalkers
    * - 8m
      - Easy
@@ -83,7 +76,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 120
      - T
      - T
-     - 0
      - marines
    * - so_many_baneling
      - Easy
@@ -92,7 +84,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 100
      - P
      - Z
-     - 0
      - zealots
    * - MMM
      - Hard
@@ -101,7 +92,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 150
      - T
      - T
-     - 3
      - MMM
    * - 1c3s5z
      - Easy
@@ -110,7 +100,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 180
      - P
      - P
-     - 3
      - colossi_stalkers_zealots
    * - bane_vs_bane
      - Easy
@@ -119,7 +108,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 200
      - Z
      - Z
-     - 2
      - bane
    * - 2c_vs_64zg
      - Hard
@@ -128,7 +116,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 400
      - P
      - Z
-     - 0
      - colossus
    * - 3s5z
      - Hard
@@ -137,7 +124,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 150
      - P
      - P
-     - 2
      - stalkers_and_zealots
    * - 5m_vs_6m
      - Hard
@@ -146,7 +132,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 70
      - T
      - T
-     - 0
      - marines
    * - 3s_vs_5z
      - Hard
@@ -155,7 +140,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 250
      - P
      - P
-     - 0
      - stalkers
    * - 8m_vs_9m
      - Hard
@@ -164,7 +148,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 120
      - T
      - T
-     - 0
      - marines
    * - 25m
      - Hard
@@ -173,7 +156,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 150
      - T
      - T
-     - 0
      - marines
    * - 10m_vs_11m
      - Hard
@@ -182,7 +164,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 150
      - T
      - T
-     - 0
      - marines
    * - 27m_vs_30m
      - Super Hard
@@ -191,7 +172,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 180
      - T
      - T
-     - 0
      - marines
    * - 3s5z_vs_3s6z
      - Super Hard
@@ -200,7 +180,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 170
      - P
      - P
-     - 2
      - stalkers_and_zealots
    * - 6h_vs_8z
      - Super Hard
@@ -209,7 +188,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 150
      - Z
      - P
-     - 0
      - hydralisks
    * - MMM2
      - Super Hard
@@ -218,7 +196,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 180
      - T
      - T
-     - 3
      - MMM
    * - corridor
      - Super Hard
@@ -227,7 +204,6 @@ Below is a detailed description of the scenarios, including the number of agents
      - 400
      - P
      - Z
-     - 0
      - zealots
 
 
@@ -242,7 +218,6 @@ Explanation of Parameters:
 - **Limit**: Maximum length of action sequence allowed.
 - **Agent Race**: Race of the agents (Terran, Protoss, Zerg).
 - **Enemy Race**: Race of the enemies (Terran, Protoss, Zerg).
-- **Unit Type Bits**: Specific encoding related to unit types.
-- **Map Type**: Specific type of map or scenario.
+- **Map Type**: Specific type of map.
 
 For the full details of the scenarios and the research, please refer to the `original paper <https://arxiv.org/abs/1902.04043v5>`_.
