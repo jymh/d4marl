@@ -29,6 +29,7 @@ Below is a detailed description of the scenarios, including the number of agents
     :link-type: ref
 
     SMAC Maps Information
+    ^^^
 
     .. list-table::
        :widths: 8 7 7 7 7 7 7
