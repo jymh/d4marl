@@ -84,6 +84,58 @@ Why We Built This
 
     smac/smac_env
 
+Data Collection Principle
+-----------------
+
+.. grid:: 20 4 4 4 4 4
+    :gutter: 1
+
+
+    .. grid-item-card::
+        :class-header: sd-bg-success sd-text-white sd-font-weight-bold
+        :class-card: sd-outline-success  sd-rounded-1
+        :columns: 12 5 5 4
+
+        Large-scale Principle
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        Despite the current offline MARL methods showing promising results on several challenging tasks, the standard dataset should cover considerable task distribution enough to guarantee the effective validation of each algorithm.
+
+    .. grid-item-card::
+        :class-header: sd-bg-info sd-text-white sd-font-weight-bold
+        :class-card: sd-outline-info  sd-rounded-1
+        :columns: 12 5 5 4
+
+        Publicly available principle
+        ^^^^^^^^^^^^^^^^^^^^
+        The offline dataset for MARL should be available with open access for each researcher to promote this topic.
+
+    .. grid-item-card::
+        :class-header: sd-bg-primary sd-text-white sd-font-weight-bold
+        :class-card: sd-outline-primary  sd-rounded-1
+        :columns: 12 5 5 4
+
+        Feasible usage principle
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        There should be a standard interface for downloading and loading the data for the convenient algorithm design.
+
+    .. grid-item-card::
+        :class-header: sd-bg-primary sd-text-white sd-font-weight-bold
+        :class-card: sd-outline-primary  sd-rounded-1
+        :columns: 12 5 5 4
+
+        Fairness principle
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+	The offline dataset from diverse tasks should be accordingly collected along with the difficulty.
+
+    .. grid-item-card::
+        :class-header: sd-bg-primary sd-text-white sd-font-weight-bold
+        :class-card: sd-outline-primary  sd-rounded-1
+        :columns: 12 5 5 4
+
+        Visualization principle
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+	To help researchers tune their algorithms, the learning process and offline data distribution should be easily visualized in the proposed tools.
+
 
 Indices and tables
 ==================
