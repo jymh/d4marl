@@ -31,7 +31,7 @@ Why We Built This
 
 .. tab-set::
 
-    .. tab-item:: Reason I I
+    .. tab-item:: Reason I
         :sync: key1
 
         .. card::
