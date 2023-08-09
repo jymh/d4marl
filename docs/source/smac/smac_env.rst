@@ -9,11 +9,11 @@ The scenarios cover a wide range of combat combinations and tactical challenges,
 
 Below is a detailed description of the scenarios, including the number of agents, enemies, time limits, races, and other specific parameters.
 
-.. list-table:: SMAC Scenarios
-   :widths: 15 10 10 10 10 10 10 10
+.. list-table:: SMAC Maps
+   :widths: 15 10 10 10 10 10 10 10 10
    :header-rows: 1
 
-   * - Scenario
+   * - Map Name
      - Difficulty
      - Agents
      - Enemies
