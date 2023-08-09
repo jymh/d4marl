@@ -43,6 +43,7 @@ Thirdly, there is a variety of empirical metrics used to validate sample efficie
 
     start/installation
     start/usage
+    smac/smac_env
 
 
 Indices and tables
