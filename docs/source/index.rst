@@ -45,6 +45,7 @@ Thirdly, there is a variety of empirical metrics used to validate sample efficie
     :hidden:
     :maxdepth: 3
     :caption: introduction to environment
+
     smac/smac_env
 
 
