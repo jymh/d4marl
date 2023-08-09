@@ -30,10 +30,7 @@ Secondly, existing offline reinforcement learning algorithms designed for the mu
 
 Thirdly, there is a variety of empirical metrics used to validate sample efficiency after pre-training on the dataset. For example, to overcome the value overestimation problem, conventional offline RL algorithms such as CQL, BEAR, and BCQ measure the training process with a static estimated value or returns. However, these metrics cannot be used to measure sample efficiency compared to popular online algorithms. To unify benchmark measurements in offline RL, systematic metrics are needed to benchmark existing methods on different practical tasks.
 
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+------
 
 
 .. toctree::
@@ -43,6 +40,11 @@ Thirdly, there is a variety of empirical metrics used to validate sample efficie
 
     start/installation
     start/usage
+
+.. toctree::
+    :hidden:
+    :maxdepth: 3
+    :caption: introduction to environment
     smac/smac_env
 
 
