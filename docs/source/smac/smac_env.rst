@@ -245,5 +245,4 @@ Explanation of Parameters:
 - **Unit Type Bits**: Specific encoding related to unit types.
 - **Map Type**: Specific type of map or scenario.
 
-Copy code
 For the full details of the scenarios and the research, please refer to the `original paper <https://arxiv.org/abs/1902.04043v5>`_.
