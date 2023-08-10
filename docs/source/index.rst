@@ -13,10 +13,6 @@ Introduction
 Welcome To D4MARL Tutorial
 ----------------------------
 
-.. image:: images/d4marl_logo.png
-        :align: center
-        :scale: 25%
-
 
 Welcome to `D4MARL` in Offline MARL! 
 D4MARL is a infrasturactual framework including a large-scale dataset and implementation of conventional offline MARL methods, and a webpage-based and easy-to-use toolkit for training and evaluation these approaches. Offline MARL aims to develop the algorithms for a promising starting-point with no or limited online interactions.
