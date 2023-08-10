@@ -1,6 +1,17 @@
 # *D4MARL*: A Dataset and Benchmark for Diverse, Measurable Offline Multi-Agent Reinforcement Learning
 
+<div align="center">
+  <img src="https://github.com/jymh/d4marl/blob/main/docs/source/images/d4marl_logo.png" width="30%"/>
+</div>
 
+<div align="center">
+
+<p align="center">
+  <a href="https://d4marl.readthedocs.io/en/latest/">Documentation</a> |
+  <a href="https://github.com/jymh/d4marl/blob/main/###Installation Guide">Installation</a> |
+  <a href="https://github.com/jymh/d4marl/blob/main/###usa">Getting Started</a> |
+  <a href="https://github.com/PKU-Alignment/omnisafe#license">License</a>
+</p>
 
 ### Installation Guide
 
@@ -11,7 +22,6 @@ conda activate d4marl
 cd d4marl
 pip install -r requirements.txt
 ```
-
 
 
 ### Data Download Guide
