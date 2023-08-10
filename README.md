@@ -73,7 +73,7 @@ fi
 
 > The above command will train a policy with baseline algorithms including ICQ, BCQ, CQL, or MADT, and the total training steps is 1024. The vector environment number is 1. The ``steps_per_epoch`` is default as 500. If there is no local offline dataset in the `offline_data_dir`, the command will download the dataset automatically from our online storage.
 
-You can also customize the configutation of the offline algorithm by running
+You can also customize the configuration of the offline algorithm by running
 
 ```bash
 streamlit run visualize.py
@@ -81,4 +81,4 @@ streamlit run visualize.py
 
 Here we provide a user interface, in this platform, you can choose which specific task and approach need to be trained offline:
 
-> We developed a visible training tool that integrates data preparation, hyperparameter configuration, model training, and evaluation of pre-trained models based on the Streamlit platform [Read the docs](https://www.writethedocs.org/).
+> We developed a visible training tool that integrates data preparation, hyperparameter configuration, model training, and evaluation of pre-trained models based on the Streamlit platform.
