@@ -85,53 +85,48 @@ Why We Built This
 Data Collection Principle
 -----------------
 
-.. grid:: 20 4 4 4 4 4
+.. grid:: 12 4 4 4
     :gutter: 1
+
 
     .. grid-item-card::
         :class-header: sd-bg-success sd-text-white sd-font-weight-bold
         :class-card: sd-outline-success  sd-rounded-1
-        :columns: 20 5 5 4
+        :columns: 12 5 5 4
 
-        Large-scale Principle
-        ^^^^^^^^^^^^^^^^^^^^^
-        Despite the current offline MARL methods showing promising results on several challenging tasks, the standard dataset should cover considerable task distribution enough to guarantee the effective validation of each algorithm.
+        Consistent and Inherited
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+        Our code follows a comprehensive and logical system, enabling users to
+        understand the interconnection between each algorithm. For instance, if
+        one comprehends the Policy Gradient algorithm, they can quickly grasp
+        the code implementation of the PPO algorithm by reading a new function.
 
     .. grid-item-card::
         :class-header: sd-bg-info sd-text-white sd-font-weight-bold
         :class-card: sd-outline-info  sd-rounded-1
-        :columns: 20 5 5 4
+        :columns: 12 5 5 4
 
-        Publicly available principle
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        The offline dataset for MARL should be available with open access for each researcher to promote this topic.
-
-    .. grid-item-card::
-        :class-header: sd-bg-primary sd-text-white sd-font-weight-bold
-        :class-card: sd-outline-primary  sd-rounded-1
-        :columns: 20 5 5 4
-
-        Feasible usage principle
-        ^^^^^^^^^^^^^^^^^^^^^^^^
-        There should be a standard interface for downloading and loading the data for the convenient algorithm design.
+        Robust and Readable
+        ^^^^^^^^^^^^^^^^^^^^
+        Our code not only serves as a tutorial but also as a practical tool.
+        For those who want to learn about the implementation of Safe RL
+        algorithms, the highly readable code in OmniSafe provides an easy and
+        quick way to get started. For those who
+        want to develop their algorithms, OmniSafe's **highly modular and
+        reusable** code can be an excellent resource.
 
     .. grid-item-card::
         :class-header: sd-bg-primary sd-text-white sd-font-weight-bold
         :class-card: sd-outline-primary  sd-rounded-1
-        :columns: 20 5 5 4
+        :columns: 12 5 5 4
 
-        Fairness principle
-        ^^^^^^^^^^^^^^^^^^
-        The offline dataset from diverse tasks should be accordingly collected along with the difficulty.
-
-    .. grid-item-card::
-        :class-header: sd-bg-primary sd-text-white sd-font-weight-bold
-        :class-card: sd-outline-primary  sd-rounded-1
-        :columns: 20 5 5 4
-
-        Visualization principle
-        ^^^^^^^^^^^^^^^^^^^^^^^
-        To help researchers tune their algorithms, the learning process and offline data distribution should be easily visualized in the proposed tools.
+        Long-lived
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        Unlike other codes that heavily rely on external libraries, OmniSafe
+        minimizes its dependency on third-party libraries. This design
+        prevents the project from becoming obsolete due to changes in the
+        third-party library code, and optimizes the user experience by reducing
+        the number of dependencies that need to be installed to run OmniSafe.
 
 
 
