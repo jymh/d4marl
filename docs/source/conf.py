@@ -57,6 +57,7 @@ autodoc_preserve_defaults = True
 # a list of builtin themes.
 
 html_theme = 'furo'
+html_logo = 'images/d4marl_logo.png'
 html_title = ' '
 html_copy_source = False
 html_context = {
