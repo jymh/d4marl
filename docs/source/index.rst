@@ -91,7 +91,7 @@ Data Collection Principle
     .. grid-item-card::
         :class-header: sd-bg-success sd-text-white sd-font-weight-bold
         :class-card: sd-outline-success  sd-rounded-1
-        :columns: 12 5 5 4
+        :columns: 20 5 5 4
 
         Large-scale Principle
         ^^^^^^^^^^^^^^^^^^^^^
@@ -100,7 +100,7 @@ Data Collection Principle
     .. grid-item-card::
         :class-header: sd-bg-info sd-text-white sd-font-weight-bold
         :class-card: sd-outline-info  sd-rounded-1
-        :columns: 12 5 5 4
+        :columns: 20 5 5 4
 
         Publicly available principle
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -109,7 +109,7 @@ Data Collection Principle
     .. grid-item-card::
         :class-header: sd-bg-primary sd-text-white sd-font-weight-bold
         :class-card: sd-outline-primary  sd-rounded-1
-        :columns: 12 5 5 4
+        :columns: 20 5 5 4
 
         Feasible usage principle
         ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -118,7 +118,7 @@ Data Collection Principle
     .. grid-item-card::
         :class-header: sd-bg-primary sd-text-white sd-font-weight-bold
         :class-card: sd-outline-primary  sd-rounded-1
-        :columns: 12 5 5 4
+        :columns: 20 5 5 4
 
         Fairness principle
         ^^^^^^^^^^^^^^^^^^
@@ -127,7 +127,7 @@ Data Collection Principle
     .. grid-item-card::
         :class-header: sd-bg-primary sd-text-white sd-font-weight-bold
         :class-card: sd-outline-primary  sd-rounded-1
-        :columns: 12 5 5 4
+        :columns: 20 5 5 4
 
         Visualization principle
         ^^^^^^^^^^^^^^^^^^^^^^^
