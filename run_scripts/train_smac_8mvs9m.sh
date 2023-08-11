@@ -27,7 +27,7 @@ elif [ $model_type = 'madt' ]
 then
         data_dir='/data/d4marl/hdf5_files/'
         log_dir="/home/xingdp/lhmeng/Datasetproj/d4marl/algorithms/sc2/evaluation/madt/${map_name}_${quality}_madt"
-        offline_epochs=0
+        offline_epochs=100
         online_epochs=1000
         offline_batch_size=128
         offline_test_episodes=10
@@ -41,7 +41,7 @@ then
 		--obs_dim 217 \
 		--action_dim 15 \
                 --offline_epochs $offline_epochs \
-                --offline_episode_num 0 \
+                --offline_episode_num 1000 \
                 --offline_mini_batch_size $offline_batch_size \
 		--offline_lr 1e-4\
                 --offline_test_episodes $offline_test_episodes \

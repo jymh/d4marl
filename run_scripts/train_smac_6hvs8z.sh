@@ -1,8 +1,8 @@
 #!/bin/bash
 
 model_type="madt"
-map_name="25m"
-quality="medium"
+map_name="6h_vs_8z"
+quality="poor"
 
 if [ $model_type = "baseline" ]
 then
@@ -37,11 +37,11 @@ then
                 --log_dir $log_dir \
                 --offline_map_lists $map_name \
                 --offline_data_quality $quality\
-		--share_obs_dim 1203 \
-		--obs_dim 1054 \
-		--action_dim 31 \
+		--share_obs_dim 213 \
+		--obs_dim 172 \
+		--action_dim 14 \
                 --offline_epochs $offline_epochs \
-                --offline_episode_num 500 \
+                --offline_episode_num 1000 \
                 --offline_mini_batch_size $offline_batch_size \
 		--offline_lr 1e-4\
                 --offline_test_episodes $offline_test_episodes \
@@ -49,7 +49,7 @@ then
 		--online_ppo_epochs 10 \
 		--online_lr 5e-4 \
 		--online_pre_train_model_load \
-		--online_pre_train_model_id 49
+		--online_pre_train_model_id 99
 else
         echo "Model type can either be baseline or madt."
 fi

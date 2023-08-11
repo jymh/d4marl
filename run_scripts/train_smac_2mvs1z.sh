@@ -2,7 +2,7 @@
 
 model_type="madt"
 map_name="2m_vs_1z"
-quality="poor"
+quality="medium"
 
 if [ $model_type = "baseline" ]
 then
@@ -31,7 +31,7 @@ then
         online_epochs=1000
         offline_batch_size=128
         offline_test_episodes=10
-        CUDA_VISIBLE_DEVICES=2 python -u ../algorithms/sc2/run_madt_sc2.py \
+        CUDA_VISIBLE_DEVICES=0 python -u ../algorithms/sc2/run_madt_sc2.py \
 		--map_name 2m_vs_1z \
                 --offline_data_dir $data_dir \
                 --log_dir $log_dir \
@@ -41,7 +41,7 @@ then
 		--obs_dim 36 \
 		--action_dim 7 \
                 --offline_epochs $offline_epochs \
-                --offline_episode_num 300 \
+                --offline_episode_num 1000 \
                 --offline_mini_batch_size $offline_batch_size \
 		--offline_lr 1e-4\
                 --offline_test_episodes $offline_test_episodes \

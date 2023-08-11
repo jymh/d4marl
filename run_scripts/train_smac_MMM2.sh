@@ -1,8 +1,8 @@
 #!/bin/bash
 
 model_type="madt"
-map_name="25m"
-quality="medium"
+map_name="MMM2"
+quality="good"
 
 if [ $model_type = "baseline" ]
 then
@@ -31,25 +31,25 @@ then
         online_epochs=1000
         offline_batch_size=128
         offline_test_episodes=10
-        CUDA_VISIBLE_DEVICES=2 python -u ../algorithms/sc2/run_madt_sc2.py \
-		--map_name $map_name \
+        CUDA_VISIBLE_DEVICES=1 python -u ../algorithms/sc2/run_madt_sc2.py \
+		--map_name MMM2 \
                 --offline_data_dir $data_dir \
                 --log_dir $log_dir \
                 --offline_map_lists $map_name \
                 --offline_data_quality $quality\
-		--share_obs_dim 1203 \
-		--obs_dim 1054 \
-		--action_dim 31 \
+		--share_obs_dim 435 \
+		--obs_dim 370 \
+		--action_dim 18 \
                 --offline_epochs $offline_epochs \
-                --offline_episode_num 500 \
+                --offline_episode_num 1000 \
                 --offline_mini_batch_size $offline_batch_size \
 		--offline_lr 1e-4\
                 --offline_test_episodes $offline_test_episodes \
                 --online_epochs $online_epochs \
-		--online_ppo_epochs 10 \
+		--online_ppo_epochs 5 \
 		--online_lr 5e-4 \
 		--online_pre_train_model_load \
-		--online_pre_train_model_id 49
+		--online_pre_train_model_id 99
 else
         echo "Model type can either be baseline or madt."
 fi

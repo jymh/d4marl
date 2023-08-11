@@ -1,12 +1,12 @@
 #!/bin/bash
 
 model_type="madt"
-map_name="25m"
+map_name="10m_vs_11m"
 quality="medium"
 
 if [ $model_type = "baseline" ]
 then
-        data_dir="/data/d4marl/demo_files/$map_name/$quality"
+        data_dir="/data/d4marl/hdf5_files/$map_name/$quality"
         algorithm='cql'
         offline_log_filename="/home/xingdp/lhmeng/Datasetproj/d4marl/algorithms/sc2/evaluation/baseline/${map_name}_${quality}_${algorithm}.log"
         offline_log_dir="/home/xingdp/lhmeng/Datasetproj/d4marl/algorithms/sc2/evaluation/baseline/${map_name}_${quality}_${algorithm}"
@@ -37,19 +37,19 @@ then
                 --log_dir $log_dir \
                 --offline_map_lists $map_name \
                 --offline_data_quality $quality\
-		--share_obs_dim 1203 \
-		--obs_dim 1054 \
-		--action_dim 31 \
+		--share_obs_dim 351 \
+		--obs_dim 289 \
+		--action_dim 17 \
                 --offline_epochs $offline_epochs \
-                --offline_episode_num 500 \
+                --offline_episode_num 1000 \
                 --offline_mini_batch_size $offline_batch_size \
-		--offline_lr 1e-4\
+		--offline_lr 5e-4\
                 --offline_test_episodes $offline_test_episodes \
                 --online_epochs $online_epochs \
 		--online_ppo_epochs 10 \
 		--online_lr 5e-4 \
 		--online_pre_train_model_load \
-		--online_pre_train_model_id 49
+		--online_pre_train_model_id 99
 else
         echo "Model type can either be baseline or madt."
 fi

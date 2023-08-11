@@ -1,8 +1,8 @@
 #!/bin/bash
 
 model_type="madt"
-map_name="25m"
-quality="medium"
+map_name="3s5z_vs_3s6z"
+quality="poor"
 
 if [ $model_type = "baseline" ]
 then
@@ -26,7 +26,7 @@ then
 elif [ $model_type = 'madt' ]
 then
         data_dir='/data/d4marl/hdf5_files/'
-        log_dir="/home/xingdp/lhmeng/Datasetproj/d4marl/algorithms/sc2/evaluation/madt/${map_name}_${quality}_madt"
+        log_dir="/home/Datasetproj/d4marl/algorithms/sc2/evaluation/madt/${map_name}_${quality}_madt"
         offline_epochs=100
         online_epochs=1000
         offline_batch_size=128
@@ -37,9 +37,9 @@ then
                 --log_dir $log_dir \
                 --offline_map_lists $map_name \
                 --offline_data_quality $quality\
-		--share_obs_dim 1203 \
-		--obs_dim 1054 \
-		--action_dim 31 \
+		--share_obs_dim 318 \
+		--obs_dim 268 \
+		--action_dim 15 \
                 --offline_epochs $offline_epochs \
                 --offline_episode_num 500 \
                 --offline_mini_batch_size $offline_batch_size \
@@ -47,9 +47,9 @@ then
                 --offline_test_episodes $offline_test_episodes \
                 --online_epochs $online_epochs \
 		--online_ppo_epochs 10 \
-		--online_lr 5e-4 \
+		--online_lr 1e-4 \
 		--online_pre_train_model_load \
-		--online_pre_train_model_id 49
+		--online_pre_train_model_id 99
 else
         echo "Model type can either be baseline or madt."
 fi
