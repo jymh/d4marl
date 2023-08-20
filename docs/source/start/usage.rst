@@ -43,6 +43,12 @@ Train Policy
                 --download_dataset \
         fi
 
+    Here we provide an example of training MADT models using 2m_vs_1z data:
+
+    .. raw:: html
+
+        <script async id="asciicast-vYGeqh6DDloZbjFj8l5htZW8s" src="https://asciinema.org/a/vYGeqh6DDloZbjFj8l5htZW8s.js"></script>
+
 
 .. hint::
     The above command will train a policy with baseline algorithms including ICQ, BCQ, CQL, or MADT, and the total training steps is 1024. The vector environment number is 1. The ``algo_cfgs:steps_per_epoch`` is default as 500. If there is no local offline dataset in the :bdg-info-line:`offline_data_dir`, the command will download the dataset automatically from our online storage.
