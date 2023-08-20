@@ -3,6 +3,7 @@ import copy
 import glob
 import h5py
 import random
+from tqdm import tqdm
 import numpy as np
 from torch.utils.data import Dataset
 from .utils import padding_obs, padding_ava, get_episode
@@ -305,11 +306,15 @@ class MadtReplayBuffer:
                 episodes_in_file = len(list(data_file['step_cuts'])) - 1
                 # for file in sorted(path_files):
                 cnt = 0
+
+                pbar = tqdm(total=offline_episode_num[map_id] + offline_test_episodes - accumulated_episodes,
+                            desc="Loading offline data episodes", leave=False)
+
                 while(accumulated_episodes <= offline_episode_num[map_id] + offline_test_episodes):
                     share_obs, obs, actions, rewards, terminals, ava_actions = get_episode(cnt, 0, data_file)
 
-                    print("Original dimension: obs {}, share_obs {}, available_actions {}.".format(
-                        np.array(obs).shape[-1], np.array(share_obs).shape[-1], np.array(ava_actions).shape[-1]))
+                    #print("Original dimension: obs {}, share_obs {}, available_actions {}.".format(
+                    #    np.array(obs).shape[-1], np.array(share_obs).shape[-1], np.array(ava_actions).shape[-1]))
                     # padding obs
                     share_obs = padding_obs(share_obs, self.global_obs_dim)
                     obs = padding_obs(obs, self.local_obs_dim)
@@ -322,8 +327,11 @@ class MadtReplayBuffer:
 
                     accumulated_episodes += 1
                     cnt += 1
+
+                    pbar.update(1)
                     if cnt == episodes_in_file:
                         break
+                pbar.close()
             map_id += 1
 
     def random_load_offline_data(self, data_dir, offline_episode_num, offline_test_episodes, max_epi_length=400):

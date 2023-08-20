@@ -260,12 +260,12 @@ def padding_ava(ava, target_dim):
         if isinstance(ava, list):
             ava = np.array(copy.deepcopy(ava), dtype=np.long)
             shape = np.shape(ava)
-            padding = np.zeros((shape[0], shape[1], padding_size), dtype=np.long)
+            padding = np.zeros((shape[0], shape[1], padding_size), dtype=np.int64)
             ava = np.concatenate((ava, padding), axis=-1).tolist()
         elif isinstance(ava, np.ndarray):
             ava = copy.deepcopy(ava)
             shape = np.shape(ava)
-            padding = np.zeros((shape[0], shape[1], padding_size), dtype=np.long)
+            padding = np.zeros((shape[0], shape[1], padding_size), dtype=np.int64)
             ava = np.concatenate((ava, padding), axis=-1)
         else:
             print("unknwon type %s." % type(ava))
