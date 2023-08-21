@@ -284,6 +284,338 @@ Useful Results
                             <td class="align-middle text-center">2.724</td>
                         </tr>
 
+                        <tr>
+                            <td rowspan="10" class="align-middle text-center">3m</td>
+                            <td rowspan="5" class="align-middle text-center">Expert</td>
+                            <td class="align-middle text-center">BC</td>
+                            <td class="align-middle text-center">91.39</td>
+                            <td class="align-middle text-center">89.47</td>
+                            <td class="align-middle text-center">14.36</td>
+                            <td class="align-middle text-center">55.07</td>
+                            <td class="align-middle text-center">0.1607</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">BCQ-MA</td>
+                            <td class="align-middle text-center">75.91</td>
+                            <td class="align-middle text-center">71.58</td>
+                            <td class="align-middle text-center">15.86</td>
+                            <td class="align-middle text-center">66.98</td>
+                            <td class="align-middle text-center">0.1430</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">CQL-MA</td>
+                            <td class="align-middle text-center">13.94</td>
+                            <td class="align-middle text-center">15.36</td>
+                            <td class="align-middle text-center">11.66</td>
+                            <td class="align-middle text-center">33.67</td>
+                            <td class="align-middle text-center">0.2209</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">MADT</td>
+                            <td class="align-middle text-center">78.13</td>
+                            <td class="align-middle text-center">78.40</td>
+                            <td class="align-middle text-center">19.59</td>
+                            <td class="align-middle text-center">96.88</td>
+                            <td class="align-middle text-center">0.1223</td>
+                        </tr>
+
+                        <tr>
+                            <td rowspan="5" class="align-middle text-center">Poor</td>
+                            <td class="align-middle text-center">BC</td>
+                            <td class="align-middle text-center">80.30</td>
+                            <td class="align-middle text-center">81.49</td>
+                            <td class="align-middle text-center">14.11</td>
+                            <td class="align-middle text-center">52.47</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">BCQ-MA</td>
+                            <td class="align-middle text-center">74.35</td>
+                            <td class="align-middle text-center">73.28</td>
+                            <td class="align-middle text-center">13.81</td>
+                            <td class="align-middle text-center">49.56</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">CQL-MA</td>
+                            <td class="align-middle text-center">51.11</td>
+                            <td class="align-middle text-center">53.38</td>
+                            <td class="align-middle text-center">0.45</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">ICQ-MA</td>
+                            <td class="align-middle text-center">18.06</td>
+                            <td class="align-middle text-center">22.21</td>
+                            <td class="align-middle text-center">14.68</td>
+                            <td class="align-middle text-center">59.15</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">MADT</td>
+                            <td class="align-middle text-center">68.36</td>
+                            <td class="align-middle text-center">74.04</td>
+                            <td class="align-middle text-center">15.15</td>
+                            <td class="align-middle text-center">63.01</td>
+                            <td class="align-middle text-center">0.1554</td>
+                        </tr>
+
+
+                        <tr>
+                            <td rowspan="15" class="align-middle text-center">2s3z</td>
+                            <td rowspan="5" class="align-middle text-center">Expert</td>
+                            <td class="align-middle text-center">BC</td>
+                            <td class="align-middle text-center">78.01</td>
+                            <td class="align-middle text-center">71.79</td>
+                            <td class="align-middle text-center">15.73</td>
+                            <td class="align-middle text-center">34.35</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">BCQ-MA</td>
+                            <td class="align-middle text-center">76.15</td>
+                            <td class="align-middle text-center">73.14</td>
+                            <td class="align-middle text-center">19.03</td>
+                            <td class="align-middle text-center">83.42</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">CQL-MA</td>
+                            <td class="align-middle text-center">22.30</td>
+                            <td class="align-middle text-center">21.41</td>
+                            <td class="align-middle text-center">18.73</td>
+                            <td class="align-middle text-center">77.04</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">ICQ-MA</td>
+                            <td class="align-middle text-center">14.99</td>
+                            <td class="align-middle text-center">14.68</td>
+                            <td class="align-middle text-center">17.59</td>
+                            <td class="align-middle text-center">60.58</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">MADT</td>
+                            <td class="align-middle text-center">58.59</td>
+                            <td class="align-middle text-center">60.04</td>
+                            <td class="align-middle text-center">19.93</td>
+                            <td class="align-middle text-center">98.61</td>
+                            <td class="align-middle text-center">0.2907</td>
+                        </tr>
+
+                        <tr>
+                            <td rowspan="5" class="align-middle text-center">Medium</td>
+                            <td class="align-middle text-center">BC</td>
+                            <td class="align-middle text-center">75.99</td>
+                            <td class="align-middle text-center">73.27</td>
+                            <td class="align-middle text-center">13.20</td>
+                            <td class="align-middle text-center">16.48</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">BCQ-MA</td>
+                            <td class="align-middle text-center">75.69</td>
+                            <td class="align-middle text-center">74.54</td>
+                            <td class="align-middle text-center">17.64</td>
+                            <td class="align-middle text-center">62.39</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">CQL-MA</td>
+                            <td class="align-middle text-center">27.45</td>
+                            <td class="align-middle text-center">26.05</td>
+                            <td class="align-middle text-center">15.91</td>
+                            <td class="align-middle text-center">40.01</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">ICQ-MA</td>
+                            <td class="align-middle text-center">15.66</td>
+                            <td class="align-middle text-center">15.61</td>
+                            <td class="align-middle text-center">13.22</td>
+                            <td class="align-middle text-center">17.33</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">MADT</td>
+                            <td class="align-middle text-center">54.67</td>
+                            <td class="align-middle text-center">52.89</td>
+                            <td class="align-middle text-center">18.66</td>
+                            <td class="align-middle text-center">80.66</td>
+                            <td class="align-middle text-center">0.3246</td>
+                        </tr>
+
+                        <tr>
+                            <td rowspan="5" class="align-middle text-center">Poor</td>
+                            <td class="align-middle text-center">BC</td>
+                            <td class="align-middle text-center">74.02</td>
+                            <td class="align-middle text-center">72.74</td>
+                            <td class="align-middle text-center">7.61</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">BCQ-MA</td>
+                            <td class="align-middle text-center">73.83</td>
+                            <td class="align-middle text-center">72.35</td>
+                            <td class="align-middle text-center">9.57</td>
+                            <td class="align-middle text-center">8.20</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">CQL-MA</td>
+                            <td class="align-middle text-center">45.02</td>
+                            <td class="align-middle text-center">39.98</td>
+                            <td class="align-middle text-center">6.65</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">ICQ-MA</td>
+                            <td class="align-middle text-center">6.71</td>
+                            <td class="align-middle text-center">7.21</td>
+                            <td class="align-middle text-center">7.26</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">MADT</td>
+                            <td class="align-middle text-center">56.49</td>
+                            <td class="align-middle text-center">55.94</td>
+                            <td class="align-middle text-center">14.39</td>
+                            <td class="align-middle text-center">25.29</td>
+                            <td class="align-middle text-center">58.97</td>
+                        </tr>
+
+                        <tr>
+                            <td rowspan="15" class="align-middle text-center">3s_vs_3z</td>
+                            <td rowspan="5" class="align-middle text-center">Expert</td>
+                            <td class="align-middle text-center">BC</td>
+                            <td class="align-middle text-center">64.13</td>
+                            <td class="align-middle text-center">63.46</td>
+                            <td class="align-middle text-center">8.77</td>
+                            <td class="align-middle text-center">9.38</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">BCQ-MA</td>
+                            <td class="align-middle text-center">45.03</td>
+                            <td class="align-middle text-center">44.96</td>
+                            <td class="align-middle text-center">18.90</td>
+                            <td class="align-middle text-center">82.40</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">CQL-MA</td>
+                            <td class="align-middle text-center">6.79</td>
+                            <td class="align-middle text-center">6.10</td>
+                            <td class="align-middle text-center">15.78</td>
+                            <td class="align-middle text-center">42.30</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">ICQ-MA</td>
+                            <td class="align-middle text-center">13.06</td>
+                            <td class="align-middle text-center">12.60</td>
+                            <td class="align-middle text-center">17.15</td>
+                            <td class="align-middle text-center">62.63</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">MADT</td>
+                            <td class="align-middle text-center">54.34</td>
+                            <td class="align-middle text-center">52.73</td>
+                            <td class="align-middle text-center">19.21</td>
+                            <td class="align-middle text-center">84.25</td>
+                            <td class="align-middle text-center">0.3778</td>
+                        </tr>
+
+                        <tr>
+                            <td rowspan="5" class="align-middle text-center">Medium</td>
+                            <td class="align-middle text-center">BC</td>
+                            <td class="align-middle text-center">61.71</td>
+                            <td class="align-middle text-center">59.85</td>
+                            <td class="align-middle text-center">6.41</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">BCQ-MA</td>
+                            <td class="align-middle text-center">52.36</td>
+                            <td class="align-middle text-center">51.17</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">CQL-MA</td>
+                            <td class="align-middle text-center">9.42</td>
+                            <td class="align-middle text-center">5.72</td>
+                            <td class="align-middle text-center">8.93</td>
+                            <td class="align-middle text-center">1.52</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">ICQ-MA</td>
+                            <td class="align-middle text-center">12.37</td>
+                            <td class="align-middle text-center">13.35</td>
+                            <td class="align-middle text-center">11.12</td>
+                            <td class="align-middle text-center">14.66</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">MADT</td>
+                            <td class="align-middle text-center">47.25</td>
+                            <td class="align-middle text-center">47.33</td>
+                            <td class="align-middle text-center">9.26</td>
+                            <td class="align-middle text-center">5.18</td>
+                            <td class="align-middle text-center">21.26</td>
+                        </tr>
+
+                        <tr>
+                            <td rowspan="5" class="align-middle text-center">Poor</td>
+                            <td class="align-middle text-center">BC</td>
+                            <td class="align-middle text-center">74.02</td>
+                            <td class="align-middle text-center">72.74</td>
+                            <td class="align-middle text-center">7.61</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">BCQ-MA</td>
+                            <td class="align-middle text-center">73.83</td>
+                            <td class="align-middle text-center">72.35</td>
+                            <td class="align-middle text-center">9.57</td>
+                            <td class="align-middle text-center">8.20</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">CQL-MA</td>
+                            <td class="align-middle text-center">45.02</td>
+                            <td class="align-middle text-center">39.98</td>
+                            <td class="align-middle text-center">6.65</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">ICQ-MA</td>
+                            <td class="align-middle text-center">6.71</td>
+                            <td class="align-middle text-center">7.21</td>
+                            <td class="align-middle text-center">7.26</td>
+                            <td class="align-middle text-center">0</td>
+                            <td class="align-middle text-center">--</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">MADT</td>
+                            <td class="align-middle text-center">52.50</td>
+                            <td class="align-middle text-center">52.12</td>
+                            <td class="align-middle text-center">9.62</td>
+                            <td class="align-middle text-center">0.25</td>
+                            <td class="align-middle text-center">61.49</td>
+                        </tr>
+
                     </tbody>
                 </table>
             </div>
