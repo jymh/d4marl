@@ -3,7 +3,7 @@ Useful Results
 
 .. raw:: html
 
-    <div class="col-lg-12">
+    <div class="col-lg-20">
         <div class="card card-outline-secondary">
             <div class="card-header">
                 Leaderboard for 2m_vs_1z
@@ -309,6 +309,14 @@ Useful Results
                             <td class="align-middle text-center">11.66</td>
                             <td class="align-middle text-center">33.67</td>
                             <td class="align-middle text-center">0.2209</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle text-center">ICQ-MA</td>
+                            <td class="align-middle text-center">27.75</td>
+                            <td class="align-middle text-center">30.60</td>
+                            <td class="align-middle text-center">15.93</td>
+                            <td class="align-middle text-center">68.22</td>
+                            <td class="align-middle text-center">0.2332</td>
                         </tr>
                         <tr>
                             <td class="align-middle text-center">MADT</td>
