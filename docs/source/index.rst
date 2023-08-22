@@ -126,9 +126,9 @@ Data Collection Principle
 .. toctree::
     :hidden:
     :maxdepth: 3
-    :caption: useful results
+    :caption: Leaderboard
 
-    results/useful_results
+    results/Leaderboard
 
 Indices and tables
 ==================

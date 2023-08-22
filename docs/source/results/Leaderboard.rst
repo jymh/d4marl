@@ -1,4 +1,4 @@
-Experimental Results
+Leaderboard
 ==============
 
 
@@ -9,7 +9,7 @@ We have undertaken rigorous evaluations of BC, BCQ-MA, CQL-MA, ICQ-MA, and MADT 
     <div class="col-lg-12">
         <div class="card card-outline-secondary w-100">
             <div class="card-header">
-                Experimental Results on D4MARL
+                Leaderboard
             </div>
             <div class="card-body">
                 In the presented table, we showcase the empirical outcomes of diverse algorithms applied to the D4MARL dataset. As additional algorithms are proposed and evaluated on the D4MARL dataset, we will continuously update this leaderboard with their results.
@@ -27,8 +27,8 @@ We have undertaken rigorous evaluations of BC, BCQ-MA, CQL-MA, ICQ-MA, and MADT 
                         </tr>
                         <tr>
                             <th scope="col" class="align-middle text-center"></th>
-                            <th scope="col" class="align-middle text-center">SA<sub>dev</sub></th>
-                            <th scope="col" class="align-middle text-center">SA<sub>test</sub></th>
+                            <th scope="col" class="align-middle text-center">SA(dev)</th>
+                            <th scope="col" class="align-middle text-center">SA(test)</th>
                         </tr>
                     </thead>
                     <tbody>
