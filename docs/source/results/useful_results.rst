@@ -1,7 +1,13 @@
-Useful Results
+Experimental Results
 ==============
 
+
+We have undertaken rigorous evaluations of BC, BCQ-MA, CQL-MA, ICQ-MA, and MADT on the D4MARL dataset. Multiple metrics have been amassed and juxtaposed. The intricacies of these experiments are elaborated comprehensively in our paper. We anticipate that forthcoming algorithms in the SMAC domain will leverage our D4MARL dataset, facilitating comparisons within a unified framework.
+
 .. raw:: html
+
+    <link rel="stylesheet" type="text/css" href="../_static/table.css">
+    <link rel="stylesheet" type="text/css" href="../_static/clean-blog.css">
 
     <div class="col-lg-12">
         <div class="card card-outline-secondary w-100">
