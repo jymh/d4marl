@@ -27,8 +27,8 @@ We have undertaken rigorous evaluations of BC, BCQ-MA, CQL-MA, ICQ-MA, and MADT 
                         </tr>
                         <tr>
                             <th scope="col" class="align-middle text-center"></th>
-                            <th scope="col" class="align-middle text-center">SA(dev)</th>
-                            <th scope="col" class="align-middle text-center">SA(test)</th>
+                            <th scope="col" class="align-middle text-center">SA<sub>dev</sub></th>
+                            <th scope="col" class="align-middle text-center">SA<sub>test</sub></th>
                         </tr>
                     </thead>
                     <tbody>
