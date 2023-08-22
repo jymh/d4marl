@@ -25,12 +25,12 @@ We have undertaken rigorous evaluations of BC, BCQ-MA, CQL-MA, ICQ-MA, and MADT 
                             <th scope="col" colspan="2" class="align-middle text-center">Static Accuracy (%)</th>
                             <th scope="col" rowspan="2" class="align-middle text-center">Return</th>
                             <th scope="col" rowspan="2" class="align-middle text-center">Win Rate</th>
-                            <th scope="col" rowspan="2" class="align-middle text-center">Time-to-Threshold</th>
+                            <th scope="col" rowspan="2" class="align-middle text-center">Time-to-Threshold(e4)</th>
                         </tr>
                         <tr>
                             <th scope="col" class="align-middle text-center"></th>
-                            <th scope="col" class="align-middle text-center">SA_dev</th>
-                            <th scope="col" class="align-middle text-center">SA_test</th>
+                            <th scope="col" class="align-middle text-center">SA<sub>dev</sub></th>
+                            <th scope="col" class="align-middle text-center">SA<sub>test</sub></th>
                         </tr>
                     </thead>
                     <tbody>

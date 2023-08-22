@@ -70,8 +70,6 @@ html_context = {
 html_static_path = ['_static']
 
 html_css_files = [
-    'https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css',
 ]
 
 html_theme_options = {
