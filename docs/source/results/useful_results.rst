@@ -6,8 +6,6 @@ We have undertaken rigorous evaluations of BC, BCQ-MA, CQL-MA, ICQ-MA, and MADT 
 
 .. raw:: html
 
-    <link rel="stylesheet" type="text/css" href="../_static/table.css">
-
     <div class="col-lg-12">
         <div class="card card-outline-secondary w-100">
             <div class="card-header">
