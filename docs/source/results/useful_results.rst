@@ -3,12 +3,13 @@ Useful Results
 
 .. raw:: html
 
-    <div class="col-lg-20">
-        <div class="card card-outline-secondary">
+    <div class="col-lg-12">
+        <div class="card card-outline-secondary w-100">
             <div class="card-header">
-                Leaderboard for 2m_vs_1z
+                Experimental Results on D4MARL
             </div>
             <div class="card-body">
+                In the presented table, we showcase the empirical outcomes of diverse algorithms applied to the D4MARL dataset. As additional algorithms are proposed and evaluated on the D4MARL dataset, we will continuously update this leaderboard with their results.
                 <table class="table table-responsive">
                     <thead class="thead-light">
                         <!-- Header Row -->
